@@ -1,14 +1,17 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:700&display=swap');
+
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
 }
+
 .wrapper {
-  background: url(Assets/BG_Main.png) no-repeat;
+  background: url(Assets/BG_Main.jpg) no-repeat;
   background-size: cover;
   height: 100vh;
 }
+
 .navbar {
   position: fixed;
   height: 80px;
@@ -16,97 +19,93 @@
   top: 0;
   left: 0;
   background: rgba(0,0,0,0.4);
-
   display: flex;
   align-items: center;
   padding: 0 20px;
-  /* Using flexbox for layout */
 }
 
-/* Logo */
 .navbar .logo {
   width: 140px;
   height: auto;
-  padding: 20px 40px 20px 0; /* right padding to separate from nav */
+  padding: 20px 40px 20px 0;
 }
 
-/* Use flex for ul to arrange nav items */
 .navbar ul {
   display: flex;
   align-items: center;
   list-style: none;
-  flex-grow: 1; /* take remaining space */
+  flex-grow: 1;
   gap: 12px;
-  padding-left: 0;
-  margin-left: 0;
 }
 
-/* Each li: flex container to center links */
 .navbar ul li {
   display: flex;
   align-items: center;
   height: 80px;
 }
 
-/* Nav links except login */
+/* Navbar links except login button */
 .navbar ul li a:not(.login-btn) {
   font-size: 20px;
   font-family: 'Roboto', sans-serif;
-  color: rgb(0, 0, 0);
+  color: white; /* White text normally */
   padding: 6px 13px;
   text-decoration: none;
-  transition: .4s;
+  transition: color 0.4s ease;
   display: flex;
   align-items: center;
   height: 40px;
+  background: transparent;
+  border-radius: 0;
 }
 
-/* Active and hover */
-.navbar ul li a.active,
+.navbar ul li a.active {
+  color: yellow; /* Active link yellow */
+  background: transparent;
+  border-radius: 0;
+}
+
 .navbar ul li a:hover:not(.login-btn) {
-  background: rgb(238, 255, 0);
-  border-radius: 2px;
+  color: yellow; /* Hover yellow */
+  background: transparent;
+  border-radius: 0;
 }
 
-/* Push login button and avatar to right by adding margin-left:auto to the login li */
 .navbar ul li.login-li {
   margin-left: auto;
 }
 
-/* Style for the login button */
+/* Login button styles */
 .navbar ul li a.login-btn {
   background: transparent;
-  border: 2px solid rgb(238, 255, 0);
-  color: rgb(238, 255, 0);
+  border: 2px solid white;
+  color: white;
   padding: 0 18px;
   border-radius: 25px;
   font-weight: 700;
-  transition: background 0.4s, color 0.4s;
+  transition: color 0.4s, border-color 0.4s;
   height: 40px;
   line-height: 40px;
-  display: inline-block;
-  vertical-align: middle;
   font-size: 18px;
   text-align: center;
   cursor: pointer;
-  text-decoration: none; /* This removes underline */
+  text-decoration: none;
 }
 
 .navbar ul li a.login-btn:hover {
-  background: rgb(238, 255, 0);
-  color: black;
+  background: transparent;
+  color: yellow;
+  border-color: yellow;
 }
 
-/* Avatar container */
 #user-avatar {
   height: 40px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  position: relative; /* for dropdown positioning */
+  position: relative;
 }
 
-/* Avatar image */
 #user-avatar img {
   width: 40px;
   height: 40px;
@@ -116,21 +115,19 @@
   border: 2px solid rgb(238, 255, 0);
 }
 
-/* Dropdown container for avatar */
 #avatar-dropdown {
   position: absolute;
-  top: 80px; /* below navbar height */
-  right: 0; /* align right with avatar */
+  top: 80px;
+  right: 0;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 8px;
   width: 120px;
-  display: none; /* hidden by default */
+  display: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   z-index: 1000;
   font-family: 'Roboto', sans-serif;
 }
 
-/* Dropdown logout button */
 #logout-btn {
   display: block;
   width: 100%;
@@ -146,61 +143,37 @@
   transition: background 0.3s, color 0.3s;
 }
 
-/* Hover effect on logout */
 #logout-btn:hover {
   background: rgb(238, 255, 0);
   color: black;
 }
 
-/* Center content */
-.wrapper .center {
-  position: absolute;
-  left: 50%;
-  top: 55%;
-  transform: translate(-50%, -50%);
-  font-family: sans-serif;
-  user-select: none;
+/* Fix: make center not interfere with buttons */
+.center {
+  position: static;
 }
 
-.center h1 {
-  color: white;
-  font-size: 70px;
-  width: 900px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.center h2 {
-  color: white;
-  font-size: 70px;
-  font-weight: bold;
-  margin-top: 10px;
-  width: 885px;
-  text-align: center;
-}
-
+/* Buttons at bottom right */
 .center .buttons {
-  margin: 35px 280px;
+  position: fixed;
+  bottom: 250px;
+  right: 300px;
+  display: flex;
+  gap: 15px;
+  z-index: 100;
 }
 
+/* Button styles */
 .buttons button {
-  height: 50px;
-  width: 150px;
+  height: 60px;
+  width: 200px;
   font-size: 18px;
   font-weight: 600;
-  color: black;
-  background: rgb(238, 255, 0);
+  color: rgb(255, 255, 255);
+  background: rgb(1, 135, 206);
   outline: none;
   cursor: pointer;
-  border: 1px solid rgb(238, 255, 0);
-  border-radius: 25px;
+  border: none;
+  border-radius: 15px;
   transition: .4s;
-}
-
-.buttons .btn2 {
-  margin-left: 25px;
-}
-
-.buttons button:hover {
-  background: rgb(238, 255, 0);
 }

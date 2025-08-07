@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Custom Website</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div class="wrapper">
+			<nav class="navbar">
+				<img class="logo" src="logo.png">
+				<ul>
+				<li><a class="active" href="#">Home</a></li>
+				<li><a href="#">About</a></li>
+				<li><a href="#">Services</a></li>
+				<li><a href="#">Contact</a></li>
+				<li><a href="#">Feedback</a></li>
+				
+				<!-- Login button -->
+				<li class="login-li"><a href="#" class="login-btn">Login</a></li>
+
+				<!-- User avatar (hidden by default) -->
+				<li id="user-avatar" style="display:none; position: relative;">
+					<img src="" alt="User Avatar" style="width:40px; height:40px; border-radius:50%; cursor:pointer;" title="User Profile">
+
+					<!-- Dropdown -->
+					<div id="avatar-dropdown" style="display:none; position: absolute; top: 50px; right: 0; background: rgba(0,0,0,0.8); border-radius: 5px; min-width: 100px; z-index: 1000;">
+						<a href="#" id="logout-btn" style="display: block; padding: 10px; color: white; text-decoration: none; cursor: pointer;">Logout</a>
+					</div>
+				</li>
+				</ul>
+			</nav>
+			<div class="center">
+			<h1>STI DASMARINAS</h1>
+			<h2>INVENTORY MANAGER</h2>
+			<div class="buttons">
+			<button>Explore More</button>
+			<a href="inventory.html" class="btn2-link"><button class="btn2">Inventory</button></a>
+		</div>
+		</div>
+
+		<!-- Login/Register Modal -->
+		<div id="login-modal" style="display:none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 10px; color: white; width: 300px; z-index: 1000;">
+		<h2>Login</h2>
+		<input type="email" id="email" placeholder="Email" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+		<input type="password" id="password" placeholder="Password" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+
+		<button id="login-btn" style="width: 100%; padding: 10px; background: rgb(238, 255, 0); border: none; border-radius: 25px; font-weight: 700; cursor: pointer;">Login</button>
+
+		<button id="register-btn" style="display:none; width: 100%; padding: 10px; background: rgb(238, 255, 0); border: none; border-radius: 25px; font-weight: 700; cursor: pointer;">Register</button>
+
+		<div style="margin-top: 10px; display: flex; justify-content: space-between;">
+			<button id="close-login" style="width: 48%; padding: 8px; background: transparent; border: 1px solid white; border-radius: 25px; cursor: pointer; color: white;">Close</button>
+
+			<button id="toggle-register" style="width: 48%; padding: 8px; background: transparent; border: 1px solid white; border-radius: 25px; cursor: pointer; color: white;">Register</button>
+
+			<button id="toggle-login" style="display:none; width: 48%; padding: 8px; background: transparent; border: 1px solid white; border-radius: 25px; cursor: pointer; color: white;">Login</button>
+		</div>
+
+		<p id="login-error" style="color: red; margin-top: 10px;"></p>
+		</div>
+
+
+		<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+		<script src="script.js"></script>
+
+</body>
+</html>

@@ -13,7 +13,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// DOM elements
+// DOM elements for auth and UI
 const loginModal = document.getElementById('login-modal');
 const loginBtn = document.querySelector('.login-btn');
 const closeLoginBtn = document.getElementById('close-login');
@@ -24,18 +24,27 @@ const toggleToLoginBtn = document.getElementById('toggle-login');
 const loginError = document.getElementById('login-error');
 const modalTitle = document.querySelector('#login-modal h2');
 
-const userAvatarLi = document.getElementById('user-avatar');
-const userAvatarImg = userAvatarLi ? userAvatarLi.querySelector('img') : null;
+const userAvatarDiv = document.getElementById('user-avatar');
+const userAvatarImg = userAvatarDiv ? userAvatarDiv.querySelector('img') : null;
 const avatarDropdown = document.getElementById('avatar-dropdown');
 const logoutBtn = document.getElementById('logout-btn');
 
+const inventoryLink = document.getElementById('inventory-link');
+
+// DOM elements for content toggle
+const aboutLink = document.getElementById('about-link');
+const homeLink = document.getElementById('home-link');
+const mainContent = document.getElementById('main-content');
+const aboutPage = document.getElementById('about-page');
+
 // Show login modal
-loginBtn.addEventListener('click', () => {
+loginBtn.addEventListener('click', (e) => {
+  e.preventDefault();
   showLoginForm();
   loginModal.style.display = 'block';
 });
 
-// Close modal
+// Close login modal
 closeLoginBtn.addEventListener('click', () => {
   loginModal.style.display = 'none';
   loginError.textContent = '';
@@ -45,6 +54,11 @@ closeLoginBtn.addEventListener('click', () => {
 loginSubmitBtn.addEventListener('click', () => {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
+
+  if(!email || !password) {
+    loginError.textContent = "Please enter email and password.";
+    return;
+  }
 
   auth.signInWithEmailAndPassword(email, password)
     .then(() => {
@@ -62,6 +76,11 @@ registerSubmitBtn.addEventListener('click', () => {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
 
+  if(!email || !password) {
+    loginError.textContent = "Please enter email and password.";
+    return;
+  }
+
   auth.createUserWithEmailAndPassword(email, password)
     .then(() => {
       loginError.textContent = '';
@@ -73,17 +92,16 @@ registerSubmitBtn.addEventListener('click', () => {
     });
 });
 
-// Toggle to Register form
+// Toggle to register form
 toggleToRegisterBtn.addEventListener('click', () => {
   showRegisterForm();
 });
 
-// Toggle back to Login form
+// Toggle back to login form
 toggleToLoginBtn.addEventListener('click', () => {
   showLoginForm();
 });
 
-// Functions to switch forms
 function showLoginForm() {
   modalTitle.textContent = 'Login';
   loginSubmitBtn.style.display = 'block';
@@ -91,7 +109,6 @@ function showLoginForm() {
   toggleToRegisterBtn.style.display = 'inline-block';
   toggleToLoginBtn.style.display = 'none';
   loginError.textContent = '';
-  clearInputs();
 }
 
 function showRegisterForm() {
@@ -101,58 +118,71 @@ function showRegisterForm() {
   toggleToRegisterBtn.style.display = 'none';
   toggleToLoginBtn.style.display = 'inline-block';
   loginError.textContent = '';
-  clearInputs();
 }
 
-function clearInputs() {
-  document.getElementById('email').value = '';
-  document.getElementById('password').value = '';
-}
-
-// Logout button click inside dropdown
-logoutBtn.addEventListener('click', () => {
-  auth.signOut();
-  avatarDropdown.style.display = 'none';
-});
-
-// Toggle dropdown on avatar click
-if (userAvatarImg) {
-  userAvatarImg.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent click from bubbling to document
-    if (avatarDropdown.style.display === 'block') {
-      avatarDropdown.style.display = 'none';
-    } else {
-      avatarDropdown.style.display = 'block';
-    }
-  });
-}
-
-// Close dropdown if click outside
-document.addEventListener('click', () => {
-  if (avatarDropdown) {
-    avatarDropdown.style.display = 'none';
-  }
-});
-
+// Update UI based on auth state
 auth.onAuthStateChanged(user => {
   if (user) {
-    console.log('User logged in:', user.email);
+    loginBtn.style.display = 'none';
+    userAvatarDiv.style.display = 'block';
 
-    if (loginBtn) loginBtn.style.display = 'none';
+    // Show inventory link for authenticated users
+    inventoryLink.style.display = 'inline-flex';
 
-    if (userAvatarLi && userAvatarImg) {
-      userAvatarLi.style.display = 'inline-block';
-
-      if (user.photoURL) {
-        userAvatarImg.src = user.photoURL;
-      } else {
-        userAvatarImg.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.email) + '&background=FFFF00&color=000000&rounded=true&size=128';
-      }
+    // Load user photoURL or default avatar
+    if (user.photoURL) {
+      userAvatarImg.src = user.photoURL;
+    } else {
+      userAvatarImg.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; // default avatar
     }
   } else {
-    console.log('User logged out');
-    if (loginBtn) loginBtn.style.display = 'inline-block';
-    if (userAvatarLi) userAvatarLi.style.display = 'none';
-    if (avatarDropdown) avatarDropdown.style.display = 'none';
+    loginBtn.style.display = 'flex';
+    userAvatarDiv.style.display = 'none';
+    inventoryLink.style.display = 'none';
   }
 });
+
+// Avatar dropdown toggle using .visible class
+userAvatarDiv.addEventListener('click', (e) => {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle('visible');
+});
+
+
+// Hide dropdown if clicking outside
+document.addEventListener('click', () => {
+  avatarDropdown.classList.remove('visible');
+});
+
+// Logout
+logoutBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  auth.signOut();
+  avatarDropdown.classList.remove('visible');
+  alert('Logged out successfully!');
+});
+
+// Navigation for about and home
+aboutLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  mainContent.style.display = 'none';
+  aboutPage.style.display = 'block';
+  homeLink.classList.remove('active');
+  aboutLink.classList.add('active');
+
+  // Fill about content
+  aboutPage.innerHTML = `
+    <p>This is a custom website created by a custom programmer. All rights reserved 2024</p>
+    <p>Visit the <a href="https://sti.edu/" target="_blank" style="color: yellow;">STI Website</a> for more info.</p>
+  `;
+
+});
+
+homeLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  mainContent.style.display = 'block';
+  aboutPage.style.display = 'none';
+  homeLink.classList.add('active');
+  aboutLink.classList.remove('active');
+});
+

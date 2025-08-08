@@ -20,9 +20,10 @@ nav.navbar a.logo-link {
   z-index: 10100;
   cursor: pointer;
 }
-/*STI LOGO*/
+
+/* STI Logo */
 nav.navbar img.logo {
-  height: 50px; 
+  height: 50px;
   width: auto;
   user-select: none;
 }
@@ -32,6 +33,7 @@ nav.navbar ul {
   display: flex;
   gap: 20px;
   margin: 0;
+  margin-left: 20px;
   padding: 0;
   align-items: center;
   flex-grow: 1;
@@ -44,13 +46,19 @@ nav.navbar ul li {
 }
 
 nav.navbar ul li a {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 8px 12px;
   display: flex;
   align-items: center;
   height: 100%;
+  padding: 8px 12px;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+nav.navbar ul li a.active {
+  color: yellow;
+  font-weight: bold;
 }
 
 nav ul li a.active {
@@ -58,7 +66,7 @@ nav ul li a.active {
   font-weight: bold;
 }
 
-/* Group login button and avatar */
+/* Login + Avatar group */
 nav.navbar ul li.login-avatar-group {
   margin-left: auto;
   display: flex;
@@ -67,8 +75,8 @@ nav.navbar ul li.login-avatar-group {
   height: 80px;
 }
 
-/* Login button styles */
-nav.navbar ul li.login-avatar-group a.login-btn {
+/* Login Button */
+.login-btn {
   height: 40px;
   padding: 0 18px;
   border: 2px solid white;
@@ -83,16 +91,14 @@ nav.navbar ul li.login-avatar-group a.login-btn {
   cursor: pointer;
   transition: color 0.4s, border-color 0.4s;
   box-sizing: border-box;
-  line-height: normal;
-  margin: 0;
 }
 
-nav.navbar ul li.login-avatar-group a.login-btn:hover {
+.login-btn:hover {
   color: yellow;
   border-color: yellow;
 }
 
-/* Avatar container */
+/* Avatar Circle */
 #user-avatar {
   width: 40px;
   height: 40px;
@@ -101,7 +107,7 @@ nav.navbar ul li.login-avatar-group a.login-btn:hover {
   overflow: hidden;
   border: 2px solid rgb(238, 255, 0);
   position: relative;
-  display: none; /* hidden by default */
+  display: none;
   z-index: 11001;
 }
 
@@ -112,15 +118,15 @@ nav.navbar ul li.login-avatar-group a.login-btn:hover {
   display: block;
 }
 
-/* Avatar dropdown */
+/* Dropdown */
 #avatar-dropdown {
   position: absolute;
-  top: 48px; 
+  top: 48px;
   right: 0;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 5px;
   min-width: 120px;
-  display: none; /* hidden by default */
+  display: none;
   z-index: 99999;
 }
 
@@ -141,17 +147,76 @@ nav.navbar ul li.login-avatar-group a.login-btn:hover {
   color: black;
 }
 
-/* Add top padding so page content is not under navbar */
-#main-content, 
-
-#about-page {
+/* Content padding */
+#main-content, #about-page {
   padding-top: 120px;
   padding-left: 20px;
   padding-right: 20px;
   max-width: 1900px;
-  margin-left: 400px;
-  margin: 0 !important;
-  text-align: left !important;
+  margin: 0 auto;
+  text-align: left;
 }
 
+/* Login Modal */
+#login-modal {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 30px;
+  border-radius: 10px;
+  color: white;
+  width: 300px;
+  z-index: 1000;
+}
+
+#login-modal input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+#login-modal button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#login-modal #login-btn,
+#login-modal #register-btn {
+  background: rgb(238, 255, 0);
+  color: black;
+}
+
+.modal-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-footer button {
+  width: 48%;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 25px;
+  color: white;
+  cursor: pointer;
+}
+
+#login-error {
+  color: red;
+  margin-top: 10px;
+}
+
+#inventory-link {
+  display: none;
+  align-items: center;
+  height: 80px;
+}
 

@@ -4,6 +4,22 @@
   <meta charset="UTF-8" />
   <title>Custom Website</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Reset navbar buttons to avoid inventory.css side effects */
+    nav a, nav button {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      color: inherit !important;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body style="
   background: url('Assets/BG_Main.jpg') no-repeat center center fixed;
@@ -21,23 +37,26 @@
       <ul>
         <li><a href="#" id="home-link" class="active">Home</a></li>
         <li><a href="#" id="about-link">About</a></li>
-        <li id="inventory-link" style="display: none;"><a href="inventory.html">Inventory</a></li>
+        <li id="inventory-link" style="display: none;">
+          <a href="#" id="inventory-link-a">Inventory</a>
+        </li>
+        <li id="my-tickets-link" style="display: none;">
+          <a href="#" id="my-tickets-link-a">My Tickets</a>
+        </li>
 
         <!-- Group login button and avatar together -->
-        <li class="login-avatar-group" style="display: flex;">
+        <li class="login-avatar-group" style="display: flex; position: relative;">
+          <!-- Login Button -->
           <a href="#" class="login-btn">Login</a>
 
-          <!-- User role -->
-          <div id="avatar-dropdown">
-            <div id="user-role" style="padding: 10px; color: yellow; font-weight: bold; border-bottom: 1px solid rgba(238, 255, 0, 0.4); display: none;"></div>
-            <a href="#" id="logout-btn">Logout</a>
-          </div>
-
-          <!-- User avatar -->
-          <div id="user-avatar">
+          <!-- User Avatar -->
+          <div id="user-avatar" style="display:none;">
             <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Avatar">
           </div>
+
+          <!-- Avatar Dropdown (single instance only) -->
           <div id="avatar-dropdown">
+            <div id="user-role" style="padding: 10px; color: yellow; font-weight: bold; border-bottom: 1px solid rgba(238, 255, 0, 0.4); display: none;"></div>
             <a href="#" id="logout-btn">Logout</a>
           </div>
         </li>
@@ -46,12 +65,7 @@
 
     <!-- Main content -->
     <div id="main-content" style="font-size: 24px;">
-      <!--Home Page Content (GOES HERE)-->
-    </div>
-
-    <!-- About content (hidden by default) -->
-    <div id="about-page" style="display: none; font-size: 24px;">
-      <!-- Will be filled dynamically by JS -->
+      <!-- Home page content loads here dynamically -->
     </div>
 
     <!-- Login/Register Modal -->

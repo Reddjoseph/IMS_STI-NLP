@@ -45,25 +45,42 @@ nav.navbar ul li {
   height: 80px;
 }
 
-nav.navbar ul li a {
+/* General reset for all navbar links */
+nav.navbar ul li a,
+nav.navbar ul li a:focus,
+nav.navbar ul li a:active,
+nav.navbar ul li a:hover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  height: 80px !important;
+  line-height: normal !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  text-decoration: none;
   display: flex;
   align-items: center;
-  height: 100%;
-  padding: 8px 12px;
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
   box-sizing: border-box;
+  transition: color 0.3s ease;
 }
 
+/* Hover/focus color */
+nav.navbar ul li a:hover,
+nav.navbar ul li a:focus {
+  color: yellow !important;
+}
+
+/* Active link styling */
 nav.navbar ul li a.active {
-  color: yellow;
-  font-weight: bold;
-}
-
-nav ul li a.active {
-  color: yellow;
-  font-weight: bold;
+  color: yellow !important;
+  font-weight: bold !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 /* Login + Avatar group */

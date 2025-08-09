@@ -20,3 +20,6 @@
 ## PATCH 4.0
 - Converted the entire project to a single page file using SSI
 - Deleted the entire Inventory system temporarily for revision
+
+## PATCH 5.0
+- Re-declared inventory for UI and optimization

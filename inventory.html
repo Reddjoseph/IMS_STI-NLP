@@ -1,5 +1,28 @@
-<h1>INVENTORY</h1>
-<p>Welcoem to the inventory.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory</title>
 
-<!-- inventory.html -->
-<div id="inventory-root"></div>
+  <!-- Link to your CSS -->
+  <link rel="stylesheet" href="inventory.css" />
+</head>
+<body>
+  <h1>INVENTORY</h1>
+  <p>Welcome to the inventory.</p>
+
+  <!-- ✅ Add Item Button -->
+  <button id="add-item-btn">➕ Add Item</button>
+
+  <!-- ✅ Inventory display area -->
+  <div id="inventory-root">Loading inventory...</div>
+
+  <!-- ✅ Firebase SDKs -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+
+  <!-- ✅ Your inventory logic -->
+  <script type="module" src="inventory.js"></script>
+</body>
+</html>

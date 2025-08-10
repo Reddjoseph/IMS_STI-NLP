@@ -171,67 +171,80 @@ window.onload = function () {
     activeLink.classList.add('active');
   }
 
-  function loadPage(page) {
-    let fileName = '';
-    let bgImage = '';
+function loadPage(page) {
+  let fileName = '';
+  let bgImage = '';
 
-    switch (page) {
-      case 'home':
-        fileName = 'home.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
-        break;
-      case 'about':
-        fileName = 'about.html';
-        bgImage = "url('Assets/BG_About.jpg')";
-        break;
-      case 'mytickets':
-        fileName = 'tickets-content.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
-        break;
-      case 'inventory':
-        fileName = 'inventory.html';
-        bgImage = "url('Assets/BG_Inventory.jpg')";
-        break;
-      default:
-        fileName = 'home.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
-    }
-
-    fetch(fileName)
-      .then(response => {
-        if (!response.ok) throw new Error('Page not found');
-        return response.text();
-      })
-      .then(html => {
-        document.getElementById('main-content').innerHTML = html;
-        document.body.style.backgroundImage = bgImage;
-
-        // Load inventory.js and inventory.css only if inventory page
-        if (page === 'inventory') {
-          // Load CSS if not already
-          if (!document.getElementById('inventory-css')) {
-            const cssLink = document.createElement('link');
-            cssLink.id = 'inventory-css';
-            cssLink.rel = 'stylesheet';
-            cssLink.href = 'inventory.css';
-            document.head.appendChild(cssLink);
-          }
-
-          // Remove old inventory.js if present
-          const oldScript = document.getElementById('inventory-js');
-          if (oldScript) oldScript.remove();
-
-          // Load JS dynamically (with cache-busting to force re-run)
-          const script = document.createElement('script');
-          script.id = 'inventory-js';
-          script.src = `inventory.js?t=${Date.now()}`;
-          script.type = 'module'; // only if you're using ES6 modules
-          document.body.appendChild(script);
-        }
-      })
-      .catch(err => {
-        document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
-        console.error(err);
-      });
+  switch (page) {
+    case 'home':
+      fileName = 'home.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
+      break;
+    case 'about':
+      fileName = 'about.html';
+      bgImage = "url('Assets/BG_About.jpg')";
+      break;
+    case 'mytickets':
+      fileName = 'tickets-content.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
+      break;
+    case 'inventory':
+      fileName = 'inventory.html';
+      bgImage = "url('Assets/BG_Inventory.jpg')";
+      break;
+    default:
+      fileName = 'home.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
   }
+
+  fetch(fileName)
+    .then(response => {
+      if (!response.ok) throw new Error('Page not found');
+      return response.text();
+    })
+    .then(html => {
+      document.getElementById('main-content').innerHTML = html;
+      document.body.style.backgroundImage = bgImage;
+
+      // Helper function to load CSS once
+      function loadCSS(id, href) {
+        if (!document.getElementById(id)) {
+          const cssLink = document.createElement('link');
+          cssLink.id = id;
+          cssLink.rel = 'stylesheet';
+          cssLink.href = href;
+          document.head.appendChild(cssLink);
+        }
+      }
+
+      // Helper function to reload JS (fresh version each time)
+      function loadJS(id, src) {
+        const oldScript = document.getElementById(id);
+        if (oldScript) oldScript.remove();
+
+        const script = document.createElement('script');
+        script.id = id;
+        script.src = `${src}?t=${Date.now()}`;
+        script.type = 'module';
+        script.defer = true; // ensures it runs after HTML is parsed
+        document.body.appendChild(script);
+      }
+
+      if (page === 'inventory') {
+        loadCSS('inventory-css', 'inventory.css');
+        loadJS('inventory-js', 'inventory.js');
+      }
+
+      if (page === 'mytickets') {
+        loadCSS('tickets-css', 'tickets-content.css');
+        loadJS('tickets-js', 'tickets-content.js');
+      }
+    })
+    .catch(err => {
+      document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
+      console.error(err);
+    });
+}
+
+
 };

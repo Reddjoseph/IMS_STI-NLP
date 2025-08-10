@@ -4,7 +4,10 @@ import {
   getFirestore,
   collection,
   getDocs,
-  addDoc
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 console.log("✅ inventory.js loaded");
@@ -29,6 +32,16 @@ async function fetchInventory() {
   const root = document.getElementById("inventory-root");
   root.innerHTML = ""; // Clear previous content
 
+  // Get stat display elements
+  const totalCountElem = document.getElementById("total-items-count");
+  const deterioratingCountElem = document.getElementById("deteriorating-items-count");
+  const replacementCountElem = document.getElementById("replacement-items-count");
+
+  // Reset stats while loading
+  if (totalCountElem) totalCountElem.textContent = '0';
+  if (deterioratingCountElem) deterioratingCountElem.textContent = '0';
+  if (replacementCountElem) replacementCountElem.textContent = '0';
+
   try {
     const inventoryCol = collection(db, "inventory");
     const snapshot = await getDocs(inventoryCol);
@@ -37,6 +50,22 @@ async function fetchInventory() {
       root.textContent = "No inventory items found.";
       return;
     }
+
+    // --- Calculate stats ---
+    const allItems = [];
+    snapshot.forEach(docSnap => {
+      const item = docSnap.data();
+      allItems.push(item);
+    });
+
+    const totalItems = allItems.length;
+    const deterioratingItems = allItems.filter(item => item.Condition === "Deteriorating").length;
+    const forReplacementItems = allItems.filter(item => item.Condition === "For replacement").length;
+
+    // Update stats in the UI
+    if (totalCountElem) totalCountElem.textContent = totalItems;
+    if (deterioratingCountElem) deterioratingCountElem.textContent = deterioratingItems;
+    if (replacementCountElem) replacementCountElem.textContent = forReplacementItems;
 
     // Create filter container
     const filterContainer = document.createElement("div");
@@ -55,13 +84,7 @@ async function fetchInventory() {
     // Laboratory Filter
     const labFilter = document.createElement("select");
     labFilter.id = "filter-lab";
-    labFilter.style.padding = "10px";
-    labFilter.style.borderRadius = "5px";
-    labFilter.style.border = "1px solid #555";
-    labFilter.style.background = "#111";
-    labFilter.style.color = "white";
     labFilter.style.minWidth = "150px";
-
     labFilter.innerHTML = `
       <option value="">All Laboratories</option>
       <option value="Laboratory 1">Laboratory 1</option>
@@ -74,13 +97,7 @@ async function fetchInventory() {
     // Condition Filter
     const conditionFilter = document.createElement("select");
     conditionFilter.id = "filter-condition";
-    conditionFilter.style.padding = "10px";
-    conditionFilter.style.borderRadius = "5px";
-    conditionFilter.style.border = "1px solid #555";
-    conditionFilter.style.background = "#111";
-    conditionFilter.style.color = "white";
     conditionFilter.style.minWidth = "180px";
-
     conditionFilter.innerHTML = `
       <option value="">All Conditions</option>
       <option value="Good">Good</option>
@@ -95,10 +112,10 @@ async function fetchInventory() {
     const table = document.createElement("table");
     table.className = "inventory-table";
 
-    // Table header - added ID column at start
+    // Table header - added Actions column
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["ID", "Name", "Laboratory", "Date Added", "Condition"].forEach(text => {
+    ["ID", "Name", "Laboratory", "Date Added", "Condition", "Actions"].forEach(text => {
       const th = document.createElement("th");
       th.textContent = text;
       headRow.appendChild(th);
@@ -112,12 +129,14 @@ async function fetchInventory() {
     // Store rows for filtering
     const rows = [];
 
-    snapshot.forEach(doc => {
-      const item = doc.data();
+    let i = 0;
+    snapshot.forEach(docSnap => {
+      const item = allItems[i];
+      i++;
+
       const tr = document.createElement("tr");
 
-      const idShort = doc.id.slice(-6); // last 6 chars of ID
-
+      const idShort = docSnap.id.slice(-6); // last 6 chars of ID
       const idTd = document.createElement("td");
       idTd.textContent = idShort;
 
@@ -140,7 +159,45 @@ async function fetchInventory() {
       condTd.textContent = condition;
       condTd.classList.add(`condition-${conditionClass}`);
 
-      tr.append(idTd, nameTd, labTd, dateTd, condTd);
+      // Actions cell
+      const actionsTd = document.createElement("td");
+      actionsTd.classList.add("actions-cell");
+
+      // Edit button
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "✏️ Edit";
+      editBtn.style.marginRight = "5px";
+      editBtn.style.backgroundColor = "#ffc107";
+      editBtn.style.color = "#000";
+      editBtn.style.border = "none";
+      editBtn.style.padding = "5px 10px";
+      editBtn.style.borderRadius = "5px";
+      editBtn.style.cursor = "pointer";
+      editBtn.addEventListener("click", () => {
+        showEditItemForm(docSnap.id, item);
+      });
+
+      // Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑 Delete";
+      deleteBtn.style.backgroundColor = "#dc3545";
+      deleteBtn.style.color = "#fff";
+      deleteBtn.style.border = "none";
+      deleteBtn.style.padding = "5px 10px";
+      deleteBtn.style.borderRadius = "5px";
+      deleteBtn.style.cursor = "pointer";
+      deleteBtn.addEventListener("click", async () => {
+        if (confirm(`Are you sure you want to delete "${item.Name}"?`)) {
+          await deleteDoc(doc(db, "inventory", docSnap.id));
+          alert("Item deleted successfully!");
+          fetchInventory();
+        }
+      });
+
+      actionsTd.appendChild(editBtn);
+      actionsTd.appendChild(deleteBtn);
+
+      tr.append(idTd, nameTd, labTd, dateTd, condTd, actionsTd);
       tbody.appendChild(tr);
 
       rows.push({
@@ -181,23 +238,19 @@ async function fetchInventory() {
   }
 }
 
-
 // ✅ Handle "Add Item" button click
 const addItemBtn = document.getElementById("add-item-btn");
 if (addItemBtn) {
   addItemBtn.addEventListener("click", () => {
-    console.log("➕ Add Item button clicked!");
     showAddItemForm();
   });
 }
 
 // ✅ Create and show the Add Item modal
 function showAddItemForm() {
-  // Create modal overlay
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
 
-  // Create modal content
   const modal = document.createElement("div");
   modal.className = "modal";
   modal.innerHTML = `
@@ -231,12 +284,8 @@ function showAddItemForm() {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  // Close modal on cancel
-  document.getElementById("close-modal-btn").addEventListener("click", () => {
-    overlay.remove();
-  });
+  document.getElementById("close-modal-btn").addEventListener("click", () => overlay.remove());
 
-  // Handle form submission
   const form = document.getElementById("add-item-form");
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -250,7 +299,7 @@ function showAddItemForm() {
       return;
     }
 
-    const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+    const today = new Date().toISOString().split("T")[0];
 
     try {
       const inventoryCol = collection(db, "inventory");
@@ -263,10 +312,71 @@ function showAddItemForm() {
 
       alert("✅ Item added successfully!");
       overlay.remove();
-      fetchInventory(); // Refresh the list
+      fetchInventory();
     } catch (error) {
       console.error("Error adding item:", error);
       alert("❌ Failed to add item.");
+    }
+  });
+}
+
+// ✅ Edit Item modal
+function showEditItemForm(id, item) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <h2>Edit Inventory Item</h2>
+    <form id="edit-item-form">
+      <label for="edit-name">Name:</label>
+      <input type="text" id="edit-name" value="${item.Name}" required />
+
+      <label for="edit-lab">Laboratory:</label>
+      <select id="edit-lab" required>
+        <option value="Laboratory 1" ${item.Laboratory === "Laboratory 1" ? "selected" : ""}>Laboratory 1</option>
+        <option value="Laboratory 2" ${item.Laboratory === "Laboratory 2" ? "selected" : ""}>Laboratory 2</option>
+        <option value="Laboratory 3" ${item.Laboratory === "Laboratory 3" ? "selected" : ""}>Laboratory 3</option>
+        <option value="Laboratory 4" ${item.Laboratory === "Laboratory 4" ? "selected" : ""}>Laboratory 4</option>
+      </select>
+
+      <label for="edit-condition">Condition:</label>
+      <select id="edit-condition" required>
+        <option value="Good" ${item.Condition === "Good" ? "selected" : ""}>Good</option>
+        <option value="Deteriorating" ${item.Condition === "Deteriorating" ? "selected" : ""}>Deteriorating</option>
+        <option value="For replacement" ${item.Condition === "For replacement" ? "selected" : ""}>For replacement</option>
+      </select>
+
+      <button type="submit">💾 Save Changes</button>
+      <button type="button" id="close-edit-btn">Cancel</button>
+    </form>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  document.getElementById("close-edit-btn").addEventListener("click", () => overlay.remove());
+
+  const form = document.getElementById("edit-item-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const updatedName = document.getElementById("edit-name").value.trim();
+    const updatedLab = document.getElementById("edit-lab").value;
+    const updatedCondition = document.getElementById("edit-condition").value;
+
+    try {
+      await updateDoc(doc(db, "inventory", id), {
+        Name: updatedName,
+        Laboratory: updatedLab,
+        Condition: updatedCondition
+      });
+      alert("✅ Item updated!");
+      overlay.remove();
+      fetchInventory();
+    } catch (error) {
+      console.error("Error updating item:", error);
+      alert("❌ Failed to update item.");
     }
   });
 }

@@ -1,2 +1,40 @@
-<h1>Tickets Our Inventory Management System</h1>
-<p>This system helps STI College manage, track, and maintain its inventory of IT equipment and devices with ease and efficiency.</p>
+<div class="tickets-container">
+  <h2>My Tickets</h2>
+  <button id="tc-createTicketBtn" class="btn-primary">Create New Ticket</button>
+    
+  <table class="tickets-table">
+    <thead>
+      <tr>
+        <th>Ticket ID</th>
+        <th>Item</th>
+        <th>Concern</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tc-ticketsTableBody"></tbody>
+  </table>
+</div>
+
+<!-- Modal (prefixed classes/ids to avoid collisions) -->
+<div id="tc-ticketModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content" role="dialog" aria-modal="true" aria-labelledby="tc-modal-title">
+    <button id="tc-closeModal" class="tc-modal__close" aria-label="Close">&times;</button>
+
+    <h3 id="tc-modal-title">Create Ticket</h3>
+
+    <label for="tc-ticketItem">Item</label>
+    <select id="tc-ticketItem" required></select>
+
+    <label for="tc-ticketConcern">Concern</label>
+    <input type="text" id="tc-ticketConcern" placeholder="Short title of your concern" />
+
+    <label for="tc-ticketDescription">Description</label>
+    <textarea id="tc-ticketDescription" rows="4" placeholder="Describe the issue"></textarea>
+    
+    <div style="text-align:right; margin-top:10px;">
+      <button id="tc-submitTicketBtn" class="btn-primary">Submit Ticket</button>
+    </div>
+  </div>
+</div>

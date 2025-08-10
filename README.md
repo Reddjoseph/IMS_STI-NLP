@@ -24,8 +24,13 @@
 ## PATCH 5.0
 - Re-declared inventory for UI and optimization
 
-## PATCH 6.0
+## PATCH 6.0 (DISCONTINUED) 
 - Added action buttons for creating items (inventory)
 - Added "report tickets" page
 - Added create tickets modal for the report page
 - Added display of the created tickets for users
+
+## PATCH 7.0
+- Added inventory dashboard
+- Reports are now generated
+- Updated the U.I for inventory as well to be in light mode

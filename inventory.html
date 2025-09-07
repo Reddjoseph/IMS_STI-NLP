@@ -11,30 +11,29 @@
 <body>
   <h1>INVENTORY DASHBOARD</h1>
   
-<div id="stats-container" style="display: flex; gap: 15px; margin-bottom: 20px;">
-  <div class="stat-box stat-total" id="total-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
-    <div class="stat-texts">
-      <div class="stat-title">Total Items</div>
-      <div class="stat-value" id="total-items-count">0</div>
+  <div id="stats-container" style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <div class="stat-box stat-total" id="total-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
+      <div class="stat-texts">
+        <div class="stat-title">Total Items</div>
+        <div class="stat-value" id="total-items-count">0</div>
+      </div>
+      <span class="stat-box-icon">🗃️</span>
     </div>
-    <span class="stat-box-icon">🗃️</span>
-  </div>
-  <div class="stat-box stat-deteriorating" id="deteriorating-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
-    <div class="stat-texts">
-      <div class="stat-title">Deteriorating Items</div>
-      <div class="stat-value" id="deteriorating-items-count">0</div>
+    <div class="stat-box stat-deteriorating" id="deteriorating-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
+      <div class="stat-texts">
+        <div class="stat-title">Deteriorating Items</div>
+        <div class="stat-value" id="deteriorating-items-count">0</div>
+      </div>
+      <span class="stat-box-icon">⚠️</span>
     </div>
-    <span class="stat-box-icon">⚠️</span>
-  </div>
-  <div class="stat-box stat-replacement" id="replacement-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
-    <div class="stat-texts">
-      <div class="stat-title">For Replacements</div>
-      <div class="stat-value" id="replacement-items-count">0</div>
+    <div class="stat-box stat-replacement" id="replacement-items-box" style="flex: 1; padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; user-select: none;">
+      <div class="stat-texts">
+        <div class="stat-title">For Replacements</div>
+        <div class="stat-value" id="replacement-items-count">0</div>
+      </div>
+      <span class="stat-box-icon">🔄</span>
     </div>
-    <span class="stat-box-icon">🔄</span>
   </div>
-</div>
-
 
   <!-- ✅ Add Item Button -->
   <button id="add-item-btn">➕ Add Item</button>
@@ -42,11 +41,14 @@
   <!-- ✅ Inventory display area -->
   <div id="inventory-root">Loading inventory...</div>
 
-  <!-- ✅ Firebase SDKs -->
+  <!-- QRCode.js library for QR code generation -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase SDKs -->
   <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
 
-  <!-- ✅ Your inventory logic -->
+  <!-- Your inventory logic -->
   <script type="module" src="inventory.js"></script>
 </body>
 </html>

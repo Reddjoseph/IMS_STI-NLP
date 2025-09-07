@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inventory Item Details</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
+      authDomain: "fir-inventory-2e62a.firebaseapp.com",
+      projectId: "fir-inventory-2e62a",
+      storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+      messagingSenderId: "380849220480",
+      appId: "1:380849220480:web:5a43b227bab9f9a197af65",
+      measurementId: "G-ERT87GL4XC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function getItemId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
+
+    async function fetchAndDisplayItem() {
+      const id = getItemId();
+      if (!id) {
+        document.getElementById("content").textContent = "No item ID provided.";
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "inventory", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          document.getElementById("item-name").textContent = data.Name || "N/A";
+          document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
+          document.getElementById("item-condition").textContent = data.Condition || "N/A";
+          document.getElementById("item-date").textContent = data["Date added"] || "N/A";
+        } else {
+          document.getElementById("content").textContent = "Item not found.";
+        }
+      } catch (e) {
+        document.getElementById("content").textContent = "Error loading item info.";
+        console.error(e);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", fetchAndDisplayItem);
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 600px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #content p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Inventory Item Details</h1>
+  <div id="content">
+    <p><strong>Name:</strong> <span id="item-name"></span></p>
+    <p><strong>Laboratory:</strong> <span id="item-lab"></span></p>
+    <p><strong>Condition:</strong> <span id="item-condition"></span></p>
+    <p><strong>Date Added:</strong> <span id="item-date"></span></p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Code Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #qrcode { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>Generate QR Code for Inventory Item</h2>
+
+  <label>Item ID:</label><br>
+  <input type="text" id="itemID"><br><br>
+
+  <button onclick="generateQRCode()">Generate QR Code</button>
+
+  <div id="qrcode"></div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
+      authDomain: "fir-inventory-2e62a.firebaseapp.com",
+      projectId: "fir-inventory-2e62a",
+      storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+      messagingSenderId: "380849220480",
+      appId: "1:380849220480:web:5a43b227bab9f9a197af65",
+      measurementId: "G-ERT87GL4XC"   
+    };
+
+    // Init Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function generateQRCode() {
+      const itemID = document.getElementById("itemID").value;
+
+      if (!itemID) {
+        alert("Please enter an Item ID");
+        return;
+      }
+
+      // Clear old QR code
+      document.getElementById("qrcode").innerHTML = "";
+
+      // Generate a URL that will display item details
+      const url = `https://your-app.web.app/item.html?id=${itemID}`;
+
+      // Generate QR Code
+      new QRCode(document.getElementById("qrcode"), {
+        text: url,
+        width: 200,
+        height: 200
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -194,8 +194,22 @@ async function fetchInventory() {
         }
       });
 
+      // QR Code button
+      const qrBtn = document.createElement("button");
+      qrBtn.textContent = "🔗 QR";
+      qrBtn.style.backgroundColor = "#007bff";
+      qrBtn.style.color = "#fff";
+      qrBtn.style.border = "none";
+      qrBtn.style.padding = "5px 10px";
+      qrBtn.style.borderRadius = "5px";
+      qrBtn.style.cursor = "pointer";
+      qrBtn.addEventListener("click", () => {
+        showQRModal(docSnap.id);
+      });
+
       actionsTd.appendChild(editBtn);
       actionsTd.appendChild(deleteBtn);
+      actionsTd.appendChild(qrBtn);
 
       tr.append(idTd, nameTd, labTd, dateTd, condTd, actionsTd);
       tbody.appendChild(tr);
@@ -365,13 +379,20 @@ function showEditItemForm(id, item) {
     const updatedLab = document.getElementById("edit-lab").value;
     const updatedCondition = document.getElementById("edit-condition").value;
 
+    if (!updatedName || !updatedLab || !updatedCondition) {
+      alert("Please fill out all fields.");
+      return;
+    }
+
     try {
-      await updateDoc(doc(db, "inventory", id), {
+      const docRef = doc(db, "inventory", id);
+      await updateDoc(docRef, {
         Name: updatedName,
         Laboratory: updatedLab,
         Condition: updatedCondition
       });
-      alert("✅ Item updated!");
+
+      alert("✅ Item updated successfully!");
       overlay.remove();
       fetchInventory();
     } catch (error) {
@@ -381,5 +402,59 @@ function showEditItemForm(id, item) {
   });
 }
 
-// ✅ Fetch inventory on page load
+// ✅ Show QR modal with close button
+function showQRModal(id) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+
+  // Generate a URL or string for the QR code, for example:
+  const url = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${id}`;
+;
+
+  // Include QRCode.js from CDN for generating QR (you can include in your HTML as well)
+  // Or generate QR code manually here using some lib
+  modal.innerHTML = `
+    <h2>QR Code for Item</h2>
+    <div id="qr-code-container" style="margin: 20px auto; width: 200px; height: 200px;"></div>
+    <button id="close-qr-btn">Close</button>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Generate QR code inside the container
+  generateQRCode(url, document.getElementById("qr-code-container"));
+
+  document.getElementById("close-qr-btn").addEventListener("click", () => overlay.remove());
+}
+
+// Helper function to generate QR code using QRCode.js CDN
+function generateQRCode(text, container) {
+  container.innerHTML = "";
+  const scriptId = "qr-code-lib";
+  if (!document.getElementById(scriptId)) {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+    script.id = scriptId;
+    script.onload = () => {
+      new QRCode(container, {
+        text: text,
+        width: 200,
+        height: 200,
+      });
+    };
+    document.body.appendChild(script);
+  } else {
+    new QRCode(container, {
+      text: text,
+      width: 200,
+      height: 200,
+    });
+  }
+}
+
+// Fetch inventory on load
 fetchInventory();

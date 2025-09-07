@@ -46,6 +46,13 @@
           document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
           document.getElementById("item-condition").textContent = data.Condition || "N/A";
           document.getElementById("item-date").textContent = data["Date added"] || "N/A";
+
+          // If you later add an image URL to your firestore, replace placeholder here
+          // For now, show placeholder
+          const imgElem = document.getElementById("item-image");
+          // If data.ImageURL exists, use it; else use placeholder
+          imgElem.src = data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
+          imgElem.alt = data.Name || "Inventory Item Image";
         } else {
           document.getElementById("content").textContent = "Item not found.";
         }
@@ -58,27 +65,92 @@
     window.addEventListener("DOMContentLoaded", fetchAndDisplayItem);
   </script>
   <style>
+    /* Reset some default */
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
       max-width: 600px;
+      width: 100%;
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      font-weight: 700;
+      color: #0078d7;
+      text-align: center;
     }
-    #content p {
-      font-size: 1.2rem;
-      margin: 10px 0;
+    #item-image {
+      width: 350px;
+      height: 250px;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-bottom: 30px;
+      background: #ddd;
+    }
+    .info-list {
+      width: 100%;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .info-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .info-list li:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: 600;
+      color: #555;
+    }
+    .value {
+      font-weight: 700;
+      color: #222;
+    }
+    /* Responsive */
+    @media (max-width: 420px) {
+      .container {
+        padding: 20px;
+      }
+      #item-image {
+        width: 100%;
+        height: auto;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Inventory Item Details</h1>
-  <div id="content">
-    <p><strong>Name:</strong> <span id="item-name"></span></p>
-    <p><strong>Laboratory:</strong> <span id="item-lab"></span></p>
-    <p><strong>Condition:</strong> <span id="item-condition"></span></p>
-    <p><strong>Date Added:</strong> <span id="item-date"></span></p>
-  </div>
+  <main class="container">
+    <h1>Inventory Item Details</h1>
+    <img id="item-image" src="https://via.placeholder.com/350x250?text=Loading..." alt="Loading image..." />
+    <ul class="info-list" id="content">
+      <li><span class="label">Name:</span> <span class="value" id="item-name"></span></li>
+      <li><span class="label">Laboratory:</span> <span class="value" id="item-lab"></span></li>
+      <li><span class="label">Condition:</span> <span class="value" id="item-condition"></span></li>
+      <li><span class="label">Date Added:</span> <span class="value" id="item-date"></span></li>
+    </ul>
+  </main>
 </body>
 </html>

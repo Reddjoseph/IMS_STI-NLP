@@ -145,8 +145,31 @@ async function fetchInventory() {
       const dateAdded = item["Date added"] || "N/A";
       const condition = item.Condition || "Unknown";
 
-      const nameTd = document.createElement("td");
-      nameTd.textContent = name;
+const nameTd = document.createElement("td");
+const nameLink = document.createElement("a");
+nameLink.href = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${docSnap.id}`;
+nameLink.textContent = name;
+
+// Default style (plain black text)
+nameLink.style.color = "#000";
+nameLink.style.textDecoration = "none";
+nameLink.style.cursor = "pointer";
+nameLink.style.fontWeight = "normal";
+nameLink.target = "_blank"; // open in new tab
+
+// Hover effect: blue + bold
+nameLink.addEventListener("mouseover", () => {
+  nameLink.style.color = "#2563eb";
+  nameLink.style.fontWeight = "bold";
+});
+nameLink.addEventListener("mouseout", () => {
+  nameLink.style.color = "#000";
+  nameLink.style.fontWeight = "normal";
+});
+
+nameTd.appendChild(nameLink);
+
+
 
       const labTd = document.createElement("td");
       labTd.textContent = lab;
@@ -197,6 +220,7 @@ async function fetchInventory() {
       // QR Code button
       const qrBtn = document.createElement("button");
       qrBtn.textContent = "🔗 QR";
+      qrBtn.classList.add("qr-btn");
       qrBtn.style.backgroundColor = "#007bff";
       qrBtn.style.color = "#fff";
       qrBtn.style.border = "none";

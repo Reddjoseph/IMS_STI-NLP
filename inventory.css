@@ -9,6 +9,7 @@ body {
 h1 {
   text-align: center;
   margin-bottom: 30px;
+  color: #000;
 }
 
 /* Stats Container */
@@ -136,6 +137,16 @@ h1 {
   overflow: hidden;
 }
 
+/* Zebra striping for table rows */
+.inventory-table tbody tr:nth-child(odd) {
+  background-color: #ffffff; /* pure white */
+}
+
+.inventory-table tbody tr:nth-child(even) {
+  background-color: #f2f4f7; /* light gray */
+}
+
+
 .inventory-table thead {
   background-color: #2563eb;
   color: white;
@@ -167,6 +178,12 @@ h1 {
   color: #dc2626;
   font-weight: 600;
 }
+
+.condition-unknown {
+  color: #000 !important;
+  font-weight: 600;
+}
+
 
 /* Actions cell */
 .actions-cell {
@@ -239,7 +256,7 @@ h1 {
 .modal form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .modal label {
@@ -354,6 +371,7 @@ h1 {
 
 .modal h2 {
   margin-bottom: 15px;
+  color: #000;
 }
 
 .modal button.close-qr-btn {
@@ -380,4 +398,12 @@ h1 {
 /* You can also add hover effect */
 .actions-cell button.qr-btn:hover {
   background-color: #138496;
+}
+
+/* color (ID, Name, Laboratory, Date Added) */
+.inventory-table tbody td:nth-child(1), /* ID */
+.inventory-table tbody td:nth-child(2), /* Name */
+.inventory-table tbody td:nth-child(3), /* Laboratory */
+.inventory-table tbody td:nth-child(4)  /* Date Added */ {
+  color: #000 !important;
 }

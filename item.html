@@ -2,155 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Inventory Item Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Item Details</title>
+  <link rel="stylesheet" href="inventory.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Item Details</h1>
+
+    <!-- Item info -->
+    <ul class="info-list">
+      <li><strong>ID:</strong> <span id="item-id"></span></li>
+      <li><strong>Name:</strong> <span id="item-name"></span></li>
+      <li><strong>Laboratory:</strong> <span id="item-lab"></span></li>
+      <li><strong>Condition:</strong> <span id="item-condition"></span></li>
+      <li><strong>Date Added:</strong> <span id="item-date"></span></li>
+      <li><strong>Image:</strong><br/><img id="item-image" style="max-width:300px; margin-top:10px;" /></li>
+    </ul>
+
+    <!-- Reports Section -->
+    <h2 style="margin:40px auto 15px auto; max-width:900px;">Reports for this Item</h2>
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Ticket ID</th>
+          <th>Concern</th>
+          <th>Description</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tickets-body"></tbody>
+    </table>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+    // Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
-      authDomain: "fir-inventory-2e62a.firebaseapp.com",
-      projectId: "fir-inventory-2e62a",
-      storageBucket: "fir-inventory-2e62a.firebasestorage.app",
-      messagingSenderId: "380849220480",
-      appId: "1:380849220480:web:5a43b227bab9f9a197af65",
-      measurementId: "G-ERT87GL4XC"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MSG_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
+    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    function getItemId() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("id");
+    // Get item ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const itemId = params.get("id");
+
+    // Fetch and display item details
+    async function fetchAndDisplayItem() {
+      if (!itemId) return;
+
+      const itemRef = doc(db, "inventory", itemId);
+      const snap = await getDoc(itemRef);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("item-id").textContent = itemId;
+        document.getElementById("item-name").textContent = data.Name || "";
+        document.getElementById("item-lab").textContent = data.Laboratory || "";
+        document.getElementById("item-condition").textContent = data.Condition || "";
+        document.getElementById("item-date").textContent = data.DateAdded || "";
+        if (data.Image) {
+          document.getElementById("item-image").src = data.Image;
+        }
+
+        // Fetch related tickets by item name
+        fetchTicketsForItem(data.Name || "");
+      }
     }
 
-    async function fetchAndDisplayItem() {
-      const id = getItemId();
-      if (!id) {
-        document.getElementById("content").textContent = "No item ID provided.";
-        return;
-      }
+    // Fetch tickets for this item
+    async function fetchTicketsForItem(itemName) {
+      const ticketsBody = document.getElementById("tickets-body");
+      ticketsBody.innerHTML = `<tr><td colspan="4">Loading reports...</td></tr>`;
 
       try {
-        const docRef = doc(db, "inventory", id);
-        const docSnap = await getDoc(docRef);
+        const ticketsRef = collection(db, "tickets");
+        const q = query(ticketsRef, where("item", "==", itemName));
+        const snapshot = await getDocs(q);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          document.getElementById("item-name").textContent = data.Name || "N/A";
-          document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
-          document.getElementById("item-condition").textContent = data.Condition || "N/A";
-          document.getElementById("item-date").textContent = data["Date added"] || "N/A";
-
-          // If you later add an image URL to your firestore, replace placeholder here
-          // For now, show placeholder
-          const imgElem = document.getElementById("item-image");
-          // If data.ImageURL exists, use it; else use placeholder
-          imgElem.src = data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
-          imgElem.alt = data.Name || "Inventory Item Image";
-        } else {
-          document.getElementById("content").textContent = "Item not found.";
+        if (snapshot.empty) {
+          ticketsBody.innerHTML = `<tr><td colspan="4">No reports found for this item.</td></tr>`;
+          return;
         }
-      } catch (e) {
-        document.getElementById("content").textContent = "Error loading item info.";
-        console.error(e);
+
+        ticketsBody.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const t = docSnap.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${docSnap.id}</td>
+            <td>${t.concern || ""}</td>
+            <td>${t.description || ""}</td>
+            <td style="font-weight:600;">${t.status || "Pending"}</td>
+          `;
+          ticketsBody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Error fetching tickets:", err);
+        ticketsBody.innerHTML = `<tr><td colspan="4">Error loading reports.</td></tr>`;
       }
     }
 
-    window.addEventListener("DOMContentLoaded", fetchAndDisplayItem);
+    fetchAndDisplayItem();
   </script>
-  <style>
-    /* Reset some default */
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: #f5f7fa;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      padding: 40px 20px;
-      min-height: 100vh;
-    }
-    .container {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-      max-width: 600px;
-      width: 100%;
-      padding: 30px 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin-bottom: 25px;
-      font-weight: 700;
-      color: #0078d7;
-      text-align: center;
-    }
-    #item-image {
-      width: 350px;
-      height: 250px;
-      border-radius: 8px;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 30px;
-      background: #ddd;
-    }
-    .info-list {
-      width: 100%;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      font-size: 1.1rem;
-    }
-    .info-list li {
-      padding: 12px 0;
-      border-bottom: 1px solid #e0e0e0;
-      display: flex;
-      justify-content: space-between;
-    }
-    .info-list li:last-child {
-      border-bottom: none;
-    }
-    .label {
-      font-weight: 600;
-      color: #555;
-    }
-    .value {
-      font-weight: 700;
-      color: #222;
-    }
-    /* Responsive */
-    @media (max-width: 420px) {
-      .container {
-        padding: 20px;
-      }
-      #item-image {
-        width: 100%;
-        height: auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  <main class="container">
-    <h1>Inventory Item Details</h1>
-    <img id="item-image" src="https://via.placeholder.com/350x250?text=Loading..." alt="Loading image..." />
-    <ul class="info-list" id="content">
-      <li><span class="label">Name:</span> <span class="value" id="item-name"></span></li>
-      <li><span class="label">Laboratory:</span> <span class="value" id="item-lab"></span></li>
-      <li><span class="label">Condition:</span> <span class="value" id="item-condition"></span></li>
-      <li><span class="label">Date Added:</span> <span class="value" id="item-date"></span></li>
-    </ul>
-  </main>
 </body>
 </html>

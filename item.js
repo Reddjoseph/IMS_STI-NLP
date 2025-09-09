@@ -136,6 +136,7 @@ function attachListeners() {
 document.getElementById("submitFeedbackBtn").addEventListener("click", async () => {
   const text = document.getElementById("feedbackText").value.trim();
   const admin = document.getElementById("adminName").value.trim();
+
   if (!text || !admin || !activeFeedbackTicketId) {
     alert("Please enter your name and feedback.");
     return;
@@ -148,9 +149,12 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection("tickets").doc(activeFeedbackTicketId).update({
-      feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry),
-    });
+    await db.collection("tickets")
+      .doc(activeFeedbackTicketId)
+      .set(
+        { feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry) },
+        { merge: true } // ✅ creates the field if missing
+      );
 
     // Reset form
     document.getElementById("feedbackText").value = "";
@@ -167,6 +171,7 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
     alert("Failed to save feedback. Try again.");
   }
 });
+
 
 // ✅ Close modal
 document.getElementById("closeFeedbackModal").addEventListener("click", () => {

@@ -148,7 +148,7 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
     const feedbackEntry = {
       admin,
       message: text,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      timestamp: new Date(),
     };
 
     // Try update first

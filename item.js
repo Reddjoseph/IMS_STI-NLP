@@ -1,4 +1,4 @@
-// ✅ item.js (with Feedback History + Working Save)
+// ✅ item.js (with Feedback History + Debugging)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
@@ -40,7 +40,7 @@ async function loadItemDetails() {
 
     loadItemReports();
   } catch (err) {
-    console.error("Error loading item:", err);
+    console.error("❌ Error loading item:", err);
   }
 }
 
@@ -96,7 +96,7 @@ function attachListeners() {
       try {
         await db.collection("tickets").doc(ticketId).update({ description: newDesc });
       } catch (err) {
-        console.error("Error updating description:", err);
+        console.error("❌ Error updating description:", err);
       }
     });
   });
@@ -111,7 +111,7 @@ function attachListeners() {
         e.target.classList.remove("pending", "resolved", "closed");
         e.target.classList.add(newStatus.toLowerCase());
       } catch (err) {
-        console.error("Error updating status:", err);
+        console.error("❌ Error updating status:", err);
       }
     });
   });
@@ -137,6 +137,8 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
   const text = document.getElementById("feedbackText").value.trim();
   const admin = document.getElementById("adminName").value.trim();
 
+  console.log("👉 Saving feedback:", { activeFeedbackTicketId, admin, text });
+
   if (!text || !admin || !activeFeedbackTicketId) {
     alert("Please enter your name and feedback.");
     return;
@@ -149,12 +151,13 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection("tickets")
-      .doc(activeFeedbackTicketId)
-      .set(
-        { feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry) },
-        { merge: true } // ✅ creates the field if missing
-      );
+    // Try update first
+    await db.collection("tickets").doc(activeFeedbackTicketId).set(
+      { feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry) },
+      { merge: true }
+    );
+
+    console.log("✅ Feedback saved to ticket:", activeFeedbackTicketId);
 
     // Reset form
     document.getElementById("feedbackText").value = "";
@@ -166,12 +169,14 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
     renderFeedbackHistory(history);
 
     alert("Feedback saved.");
+    const modal = document.getElementById("feedbackModal");
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
   } catch (err) {
-    console.error("Error saving feedback:", err);
-    alert("Failed to save feedback. Try again.");
+    console.error("❌ Error saving feedback:", err);
+    alert("Failed to save feedback. Details: " + err.message);
   }
 });
-
 
 // ✅ Close modal
 document.getElementById("closeFeedbackModal").addEventListener("click", () => {

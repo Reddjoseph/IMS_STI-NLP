@@ -1,0 +1,118 @@
+/* Wrapper */
+.item-wrapper {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #000;
+}
+
+/* Item card layout */
+.item-card {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  align-items: flex-start;
+}
+
+.item-card img {
+  width: 350px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-info h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.6rem;
+  color: #2563eb;
+}
+
+/* Reports section */
+.item-reports h3 {
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  color: #111;
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.reports-table th,
+.reports-table td {
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 0.95rem;
+  border: none;
+}
+
+.reports-table th {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reports-table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.reports-table tr:hover {
+  background: #eef2ff;
+}
+
+/* Editable description */
+.editable-description {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 4px;
+  font-size: 0.9rem;
+  color: #000;
+  transition: border-color 0.2s;
+}
+
+.editable-description:focus {
+  border: 1px solid #2563eb;
+  background: #f9fafb;
+  outline: none;
+}
+
+/* Status dropdown */
+.ticket-status-dropdown {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ticket-status-dropdown.pending {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.ticket-status-dropdown.resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+.ticket-status-dropdown.closed {
+  background: #e5e7eb;
+  color: #374151;
+}

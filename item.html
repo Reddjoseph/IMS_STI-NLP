@@ -2,118 +2,276 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Item Details</title>
-  <link rel="stylesheet" href="inventory.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>Item Details</h1>
-
-    <!-- Item info -->
-    <ul class="info-list">
-      <li><strong>ID:</strong> <span id="item-id"></span></li>
-      <li><strong>Name:</strong> <span id="item-name"></span></li>
-      <li><strong>Laboratory:</strong> <span id="item-lab"></span></li>
-      <li><strong>Condition:</strong> <span id="item-condition"></span></li>
-      <li><strong>Date Added:</strong> <span id="item-date"></span></li>
-      <li><strong>Image:</strong><br/><img id="item-image" style="max-width:300px; margin-top:10px;" /></li>
-    </ul>
-
-    <!-- Reports Section -->
-    <h2 style="margin:40px auto 15px auto; max-width:900px;">Reports for this Item</h2>
-    <table class="inventory-table">
-      <thead>
-        <tr>
-          <th>Ticket ID</th>
-          <th>Concern</th>
-          <th>Description</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="tickets-body"></tbody>
-    </table>
-  </div>
-
+  <title>Inventory Item Details</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MSG_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
+      authDomain: "fir-inventory-2e62a.firebaseapp.com",
+      projectId: "fir-inventory-2e62a",
+      storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+      messagingSenderId: "380849220480",
+      appId: "1:380849220480:web:5a43b227bab9f9a197af65",
+      measurementId: "G-ERT87GL4XC"
     };
 
-    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Get item ID from URL
-    const params = new URLSearchParams(window.location.search);
-    const itemId = params.get("id");
+    function getItemId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
 
-    // Fetch and display item details
     async function fetchAndDisplayItem() {
-      if (!itemId) return;
+      const id = getItemId();
+      if (!id) {
+        document.getElementById("content").textContent = "No item ID provided.";
+        return;
+      }
 
-      const itemRef = doc(db, "inventory", itemId);
-      const snap = await getDoc(itemRef);
+      try {
+        const docRef = doc(db, "inventory", id);
+        const docSnap = await getDoc(docRef);
 
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("item-id").textContent = itemId;
-        document.getElementById("item-name").textContent = data.Name || "";
-        document.getElementById("item-lab").textContent = data.Laboratory || "";
-        document.getElementById("item-condition").textContent = data.Condition || "";
-        document.getElementById("item-date").textContent = data.DateAdded || "";
-        if (data.Image) {
-          document.getElementById("item-image").src = data.Image;
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const name = data.Name || "N/A";
+          const lab = data.Laboratory || "N/A";
+          const condition = data.Condition || "Unknown";
+          const dateAdded = data["Date added"] || "N/A";
+
+          document.getElementById("item-name").textContent = name;
+          document.getElementById("item-lab").textContent = lab;
+          document.getElementById("item-date").textContent = dateAdded;
+
+          // Condition dropdown
+          const conditionSelect = document.getElementById("item-condition");
+          conditionSelect.value = condition;
+          conditionSelect.addEventListener("change", async () => {
+            try {
+              await updateDoc(docRef, { Condition: conditionSelect.value });
+              alert("✅ Condition updated successfully!");
+            } catch (err) {
+              console.error("Error updating condition:", err);
+              alert("❌ Failed to update condition.");
+            }
+          });
+
+          // Image
+          const imgElem = document.getElementById("item-image");
+          imgElem.src = data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
+          imgElem.alt = name;
+
+          // Fetch related tickets
+          fetchReports(name);
+
+        } else {
+          document.getElementById("content").textContent = "Item not found.";
         }
-
-        // Fetch related tickets by item name
-        fetchTicketsForItem(data.Name || "");
+      } catch (e) {
+        document.getElementById("content").textContent = "Error loading item info.";
+        console.error(e);
       }
     }
 
-    // Fetch tickets for this item
-    async function fetchTicketsForItem(itemName) {
-      const ticketsBody = document.getElementById("tickets-body");
-      ticketsBody.innerHTML = `<tr><td colspan="4">Loading reports...</td></tr>`;
+    async function fetchReports(itemName) {
+      const reportsBody = document.getElementById("reports-body");
+      reportsBody.innerHTML = "<tr><td colspan='3'>Loading reports...</td></tr>";
 
       try {
-        const ticketsRef = collection(db, "tickets");
-        const q = query(ticketsRef, where("item", "==", itemName));
+        const q = query(collection(db, "tickets"), where("item", "==", itemName));
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          ticketsBody.innerHTML = `<tr><td colspan="4">No reports found for this item.</td></tr>`;
+          reportsBody.innerHTML = "<tr><td colspan='3'>No reports found for this item.</td></tr>";
           return;
         }
 
-        ticketsBody.innerHTML = "";
+        reportsBody.innerHTML = "";
         snapshot.forEach(docSnap => {
-          const t = docSnap.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${docSnap.id}</td>
-            <td>${t.concern || ""}</td>
-            <td>${t.description || ""}</td>
-            <td style="font-weight:600;">${t.status || "Pending"}</td>
+          const r = docSnap.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${r.concern || "N/A"}</td>
+            <td>${r.description || "N/A"}</td>
+            <td class="status-${(r.status || "pending").toLowerCase()}">${r.status || "Pending"}</td>
           `;
-          ticketsBody.appendChild(row);
+          reportsBody.appendChild(tr);
         });
       } catch (err) {
-        console.error("Error fetching tickets:", err);
-        ticketsBody.innerHTML = `<tr><td colspan="4">Error loading reports.</td></tr>`;
+        console.error("Error fetching reports:", err);
+        reportsBody.innerHTML = "<tr><td colspan='3'>Error loading reports.</td></tr>";
       }
     }
 
-    fetchAndDisplayItem();
+    window.addEventListener("DOMContentLoaded", fetchAndDisplayItem);
   </script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      max-width: 900px;
+      width: 100%;
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 25px;
+      font-weight: 700;
+      color: #0078d7;
+      text-align: center;
+    }
+    #item-image {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-bottom: 30px;
+      background: #ddd;
+    }
+    .info-list {
+      width: 100%;
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px 0;
+      font-size: 1.1rem;
+    }
+    .info-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .info-list li:last-child {
+      border-bottom: none;
+    }
+    .label {
+      font-weight: 600;
+      color: #555;
+    }
+    .value {
+      font-weight: 700;
+      color: #222;
+    }
+    select#item-condition {
+      padding: 6px 10px;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      background-color: #fff;
+      cursor: pointer;
+    }
+    /* Reports Section */
+    .reports-section {
+      width: 100%;
+      margin-top: 20px;
+    }
+    .reports-section h2 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+      color: #0078d7;
+      text-align: left;
+    }
+    .reports-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .reports-table th,
+    .reports-table td {
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    .reports-table th {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+    }
+    .reports-table tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    /* Status colors */
+    .status-pending { color: #f39c12; font-weight: 700; }
+    .status-solved { color: #27ae60; font-weight: 700; }
+    .status-disregarded { color: #e74c3c; font-weight: 700; }
+    /* Responsive */
+    @media (max-width: 600px) {
+      body { padding: 20px 10px; }
+      .container { padding: 20px; }
+      .reports-table { font-size: 0.85rem; display: block; overflow-x: auto; }
+      .info-list li { flex-direction: column; align-items: flex-start; }
+      .label, .value { display: block; }
+      #item-image { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Inventory Item Details</h1>
+    <img id="item-image" src="https://via.placeholder.com/350x250?text=Loading..." alt="Loading image..." />
+    <ul class="info-list" id="content">
+      <li><span class="label">Name:</span> <span class="value" id="item-name"></span></li>
+      <li><span class="label">Laboratory:</span> <span class="value" id="item-lab"></span></li>
+      <li>
+        <span class="label">Condition:</span>
+        <select id="item-condition">
+          <option value="Good">Good</option>
+          <option value="Deteriorating">Deteriorating</option>
+          <option value="For replacement">For replacement</option>
+        </select>
+      </li>
+      <li><span class="label">Date Added:</span> <span class="value" id="item-date"></span></li>
+    </ul>
+
+    <section class="reports-section">
+      <h2>Reports</h2>
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reports-body">
+          <tr><td colspan="3">Loading reports...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
 </body>
 </html>

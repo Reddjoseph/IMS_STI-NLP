@@ -224,6 +224,7 @@ function waitForElement(selector, timeout = 2500) {
 
       const newTicket = {
         item: itemName,
+        itemId,
         concern,
         description,
         status: 'Pending',

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Item Details</title>
-  <link rel="stylesheet" href="style.css"> <!-- global navbar + base -->
+  <link rel="stylesheet" href="style.css"> <!-- global navbar -->
   <link rel="stylesheet" href="item.css">   <!-- new dedicated styles -->
 </head>
 <body>
@@ -37,9 +37,11 @@
     </div>
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="item.js"></script> <!-- move the script out of HTML -->
+  <!-- Firebase (Compat v9 for consistency with rest of project) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <!-- Item page logic -->
+  <script src="item.js"></script>
 </body>
 </html>

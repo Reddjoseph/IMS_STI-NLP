@@ -158,6 +158,33 @@ body {
   transform: translateY(-1px);
 }
 
+/* ✅ New: View Feedback button */
+.btn-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-feedback::before {
+  content: "💬"; /* chat bubble icon */
+  font-size: 1rem;
+}
+
+.btn-feedback:hover {
+  background-color: #1e4fc4;
+  transform: translateY(-1px);
+}
+
 /* ✅ Modal (inventory-style) */
 .tc-modal {
   display: none;
@@ -221,4 +248,45 @@ body {
 
 .tc-modal button {
   margin-top: 15px;
+}
+
+/* ✅ New: Feedback modal content */
+#viewFeedbackModal .tc-modal__content {
+  max-width: 400px;
+  text-align: left;
+}
+
+#feedbackContent {
+  font-size: 0.95rem;
+  color: #111;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 60px;
+  line-height: 1.4;
+}
+
+/* Feedback timeline */
+.feedback-entry {
+  padding: 10px;
+  border-left: 3px solid #2563eb;
+  margin-bottom: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.feedback-entry strong {
+  color: #2563eb;
+}
+
+.feedback-entry .date {
+  font-size: 0.8rem;
+  color: #555;
+  margin-left: 8px;
+}
+
+.feedback-entry p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: #111;
 }

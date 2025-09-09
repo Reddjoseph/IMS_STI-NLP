@@ -38,13 +38,22 @@
     </div>
   </div>
 
-  <!-- ✅ Feedback Modal -->
+  <!-- Feedback Modal -->
   <div id="feedbackModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button id="closeFeedbackModal" class="modal-close">&times;</button>
       <h3>Submit Feedback</h3>
+
+      <label for="adminName">Your Name</label>
+      <input type="text" id="adminName" placeholder="Enter your name">
+
+      <label for="feedbackText">Feedback</label>
       <textarea id="feedbackText" rows="4" placeholder="Enter your feedback..."></textarea>
+
       <button id="submitFeedbackBtn" class="btn-primary">Save Feedback</button>
+
+      <h4>Feedback History</h4>
+      <div id="feedbackHistory"></div>
     </div>
   </div>
 

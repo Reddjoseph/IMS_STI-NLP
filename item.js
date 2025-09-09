@@ -1,4 +1,4 @@
-// ✅ item.js (with Feedback History)
+// ✅ item.js (with Feedback History + Working Save)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
@@ -120,10 +120,11 @@ function attachListeners() {
   document.querySelectorAll(".feedback-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       activeFeedbackTicketId = e.target.dataset.id;
-      document.getElementById("feedbackModal").style.display = "flex";
-      document.getElementById("feedbackModal").setAttribute("aria-hidden", "false");
+      const modal = document.getElementById("feedbackModal");
+      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
 
-      // Load history
+      // Load history from Firestore
       const doc = await db.collection("tickets").doc(activeFeedbackTicketId).get();
       const history = doc.data().feedbackHistory || [];
       renderFeedbackHistory(history);
@@ -135,7 +136,10 @@ function attachListeners() {
 document.getElementById("submitFeedbackBtn").addEventListener("click", async () => {
   const text = document.getElementById("feedbackText").value.trim();
   const admin = document.getElementById("adminName").value.trim();
-  if (!text || !admin || !activeFeedbackTicketId) return;
+  if (!text || !admin || !activeFeedbackTicketId) {
+    alert("Please enter your name and feedback.");
+    return;
+  }
 
   try {
     const feedbackEntry = {
@@ -148,36 +152,49 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
       feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry),
     });
 
+    // Reset form
+    document.getElementById("feedbackText").value = "";
+    document.getElementById("adminName").value = "";
+
+    // Reload history immediately
+    const doc = await db.collection("tickets").doc(activeFeedbackTicketId).get();
+    const history = doc.data().feedbackHistory || [];
+    renderFeedbackHistory(history);
+
     alert("Feedback saved.");
-    document.getElementById("feedbackModal").style.display = "none";
-    document.getElementById("feedbackModal").setAttribute("aria-hidden", "true");
   } catch (err) {
     console.error("Error saving feedback:", err);
+    alert("Failed to save feedback. Try again.");
   }
 });
 
 // ✅ Close modal
 document.getElementById("closeFeedbackModal").addEventListener("click", () => {
-  document.getElementById("feedbackModal").style.display = "none";
-  document.getElementById("feedbackModal").setAttribute("aria-hidden", "true");
+  const modal = document.getElementById("feedbackModal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden", "true");
 });
 
 // Render feedback timeline
 function renderFeedbackHistory(history) {
   const container = document.getElementById("feedbackHistory");
-  container.innerHTML = history.length
-    ? history
-        .map(
-          (f) => `
+  if (!history.length) {
+    container.innerHTML = "<p style='color:#666;font-size:0.9rem;'>No feedback yet.</p>";
+    return;
+  }
+
+  container.innerHTML = history
+    .sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis()) // newest first
+    .map(
+      (f) => `
         <div class="feedback-entry">
           <strong>${escapeHtml(f.admin)}</strong>
-          <span class="date">${f.timestamp?.toDate().toLocaleString() || ""}</span>
+          <span class="date">${f.timestamp ? f.timestamp.toDate().toLocaleString() : ""}</span>
           <p>${escapeHtml(f.message)}</p>
         </div>
       `
-        )
-        .join("")
-    : "<p>No feedback yet.</p>";
+    )
+    .join("");
 }
 
 function escapeHtml(s = "") {

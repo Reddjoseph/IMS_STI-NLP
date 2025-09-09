@@ -118,29 +118,48 @@
 
 /* Feedback button */
 .feedback-btn {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
   border: none;
   background: #2563eb;
   color: #fff;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.2s;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.feedback-btn::before {
+  content: "💬";
+  font-size: 1rem;
 }
 
 .feedback-btn:hover {
   background: #1e3a8a;
+  transform: translateY(-1px);
 }
 
 /* ✅ Modal (consistent with tickets) */
 .tc-modal {
-  display: none;
+  display: flex; /* default flex layout */
+  align-items: center;
+  justify-content: center;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
+  visibility: hidden; /* hidden by default */
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.tc-modal[aria-hidden="false"] {
+  visibility: visible;
+  opacity: 1;
 }
 
 .tc-modal__content {
@@ -207,6 +226,10 @@
 }
 
 .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: #2563eb;
   color: #fff;
   border: none;
@@ -215,11 +238,18 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-primary::before {
+  content: "💾";
+  font-size: 1rem;
 }
 
 .btn-primary:hover {
   background: #1e3a8a;
+  transform: translateY(-1px);
 }
 
 /* ✅ Improved Feedback timeline */
@@ -236,7 +266,7 @@
 .feedback-entry::before {
   content: "";
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 18px;
   width: 10px;
   height: 10px;
@@ -268,13 +298,13 @@
 
 #feedbackHistory {
   position: relative;
-  padding-left: 20px;
+  padding-left: 25px;
 }
 
 #feedbackHistory::before {
   content: "";
   position: absolute;
-  left: 18px;
+  left: 16px;
   top: 0;
   bottom: 0;
   width: 2px;

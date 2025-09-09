@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Item Details</title>
   <link rel="stylesheet" href="style.css"> <!-- global navbar -->
-  <link rel="stylesheet" href="item.css">   <!-- new dedicated styles -->
+  <link rel="stylesheet" href="item.css">   <!-- dedicated styles -->
 </head>
 <body>
   <div class="item-wrapper">
@@ -30,6 +30,7 @@
             <th>Concern</th>
             <th>Description</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="item-reports-body"></tbody>
@@ -37,7 +38,17 @@
     </div>
   </div>
 
-  <!-- Firebase (Compat v9 for consistency with rest of project) -->
+  <!-- ✅ Feedback Modal -->
+  <div id="feedbackModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button id="closeFeedbackModal" class="modal-close">&times;</button>
+      <h3>Submit Feedback</h3>
+      <textarea id="feedbackText" rows="4" placeholder="Enter your feedback..."></textarea>
+      <button id="submitFeedbackBtn" class="btn-primary">Save Feedback</button>
+    </div>
+  </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
@@ -45,31 +56,3 @@
   <script src="item.js"></script>
 </body>
 </html>
-
-<!-- Reports -->
-<div class="item-reports">
-  <h3>Reports</h3>
-  <table class="reports-table">
-    <thead>
-      <tr>
-        <th>Ticket ID</th>
-        <th>Concern</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Actions</th> <!-- ✅ New -->
-      </tr>
-    </thead>
-    <tbody id="item-reports-body"></tbody>
-  </table>
-</div>
-
-<!-- ✅ Feedback Modal -->
-<div id="feedbackModal" class="tc-modal" aria-hidden="true">
-  <div class="tc-modal__content">
-    <button id="closeFeedbackModal" class="tc-modal__close">&times;</button>
-    <h3>Submit Feedback</h3>
-
-    <textarea id="feedbackText" rows="4" placeholder="Enter your feedback..."></textarea>
-    <button id="submitFeedbackBtn" class="btn-primary">Save Feedback</button>
-  </div>
-</div>

@@ -132,49 +132,78 @@
   background: #1e3a8a;
 }
 
-/* Modal */
-.modal {
+/* ✅ Modal (consistent with tickets) */
+.tc-modal {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
 }
 
-.modal-content {
+.tc-modal__content {
   background: #fff;
-  padding: 20px;
+  padding: 25px;
   border-radius: 12px;
-  width: 400px;
-  max-width: 90%;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
   box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  color: #000;
 }
 
-.modal-content h3 {
+.tc-modal__content h3 {
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 1.2rem;
   font-weight: 600;
+  color: #000;
 }
 
-.modal-content textarea {
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 0.95rem;
-  resize: vertical;
-  margin-bottom: 15px;
+.tc-modal__content h4 {
+  margin-top: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
 }
 
-.modal-close {
-  float: right;
-  background: transparent;
-  border: none;
+.tc-modal__close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
   font-size: 1.5rem;
+  border: none;
+  background: none;
   cursor: pointer;
+  color: #666;
+}
+
+.tc-modal__close:hover {
+  color: #000;
+}
+
+.tc-modal label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #000;
+}
+
+.tc-modal input,
+.tc-modal textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #000;
+}
+
+.tc-modal textarea {
+  resize: vertical;
 }
 
 .btn-primary {

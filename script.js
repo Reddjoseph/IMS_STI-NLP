@@ -93,9 +93,29 @@ window.onload = function () {
       });
   });
 
-  logoutBtn.addEventListener('click', () => {
-    auth.signOut();
-    avatarDropdown.classList.remove('visible');
+  // ✅ Updated logout: reset UI + redirect to Home
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await auth.signOut();
+      avatarDropdown.classList.remove('visible');
+
+      // Reset UI
+      avatar.style.display = 'none';
+      loginBtn.style.display = 'flex';
+      inventoryLink.style.display = 'none';
+      myTicketsLink.style.display = 'none';
+      document.getElementById('user-role').style.display = 'none';
+
+      // Load home page
+      loadPage('home');
+      setActiveLink(document.getElementById('home-link'));
+
+      alert('You have been logged out.');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Error logging out. Try again.');
+    }
   });
 
   avatar.addEventListener('click', () => {
@@ -152,7 +172,6 @@ window.onload = function () {
       const id = e.target.id;
       const pageMap = {
         'home-link': 'home',
-        'about-link': 'about',
         'my-tickets-link-a': 'mytickets',
         'inventory-link-a': 'inventory'
       };
@@ -171,80 +190,74 @@ window.onload = function () {
     activeLink.classList.add('active');
   }
 
-function loadPage(page) {
-  let fileName = '';
-  let bgImage = '';
+  function loadPage(page) {
+    let fileName = '';
+    let bgImage = '';
 
-  switch (page) {
-    case 'home':
-      fileName = 'home.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-      break;
-    case 'about':
-      fileName = 'about.html';
-      bgImage = "url('Assets/BG_About.jpg')";
-      break;
-    case 'mytickets':
-      fileName = 'tickets-content.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-      break;
-    case 'inventory':
-      fileName = 'inventory.html';
-      bgImage = "url('Assets/BG_Inventory.jpg')";
-      break;
-    default:
-      fileName = 'home.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-  }
+    switch (page) {
+      case 'home':
+        fileName = 'home.html';
+        bgImage = "url('Assets/BG_Main.jpg')";
+        break;
+      case 'mytickets':
+        fileName = 'tickets-content.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
+      case 'inventory':
+        fileName = 'inventory.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
+      default:
+        fileName = 'home.html';
+        bgImage = "url('Assets/BG_Main.jpg')";
+    }
 
-  fetch(fileName)
-    .then(response => {
-      if (!response.ok) throw new Error('Page not found');
-      return response.text();
-    })
-    .then(html => {
-      document.getElementById('main-content').innerHTML = html;
-      document.body.style.backgroundImage = bgImage;
+    fetch(fileName)
+      .then(response => {
+        if (!response.ok) throw new Error('Page not found');
+        return response.text();
+      })
+      .then(html => {
+        document.getElementById('main-content').innerHTML = html;
+        document.body.style.backgroundImage = bgImage;
 
-      // Helper function to load CSS once
-      function loadCSS(id, href) {
-        if (!document.getElementById(id)) {
-          const cssLink = document.createElement('link');
-          cssLink.id = id;
-          cssLink.rel = 'stylesheet';
-          cssLink.href = href;
-          document.head.appendChild(cssLink);
+        // Helper function to load CSS once
+        function loadCSS(id, href) {
+          if (!document.getElementById(id)) {
+            const cssLink = document.createElement('link');
+            cssLink.id = id;
+            cssLink.rel = 'stylesheet';
+            cssLink.href = href;
+            document.head.appendChild(cssLink);
+          }
         }
-      }
 
-      // Helper function to reload JS (fresh version each time)
-      function loadJS(id, src) {
-        const oldScript = document.getElementById(id);
-        if (oldScript) oldScript.remove();
+        // Helper function to reload JS (fresh version each time)
+        function loadJS(id, src) {
+          const oldScript = document.getElementById(id);
+          if (oldScript) oldScript.remove();
 
-        const script = document.createElement('script');
-        script.id = id;
-        script.src = `${src}?t=${Date.now()}`;
-        script.type = 'module';
-        script.defer = true; // ensures it runs after HTML is parsed
-        document.body.appendChild(script);
-      }
+          const script = document.createElement('script');
+          script.id = id;
+          script.src = `${src}?t=${Date.now()}`;
+          script.type = 'module';
+          script.defer = true; // ensures it runs after HTML is parsed
+          document.body.appendChild(script);
+        }
 
-      if (page === 'inventory') {
-        loadCSS('inventory-css', 'inventory.css');
-        loadJS('inventory-js', 'inventory.js');
-      }
+        if (page === 'inventory') {
+          loadCSS('inventory-css', 'inventory.css');
+          loadJS('inventory-js', 'inventory.js');
+        }
 
-      if (page === 'mytickets') {
-        loadCSS('tickets-css', 'tickets-content.css');
-        loadJS('tickets-js', 'tickets-content.js');
-      }
-    })
-    .catch(err => {
-      document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
-      console.error(err);
-    });
-}
-
-
+        if (page === 'mytickets') {
+          loadCSS('tickets-css', 'tickets-content.css');
+          loadJS('tickets-js', 'tickets-content.js');
+        }
+      })
+      .catch(err => {
+        document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
+        console.error(err);
+      });
+  }
 };

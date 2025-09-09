@@ -1,21 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Inventory Item Details</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      updateDoc,
-      collection,
-      query,
-      where,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+  <meta charset="UTF-8">
+  <title>Item Details</title>
+  <link rel="stylesheet" href="inventory.css">
+  <style>
+    .ticket-status-dropdown {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ticket-status-dropdown.pending {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .ticket-status-dropdown.resolved {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .ticket-status-dropdown.closed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .editable-description {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 4px;
+      font-size: 0.9rem;
+      color: #000;
+    }
+    .editable-description:focus {
+      border: 1px solid #2563eb;
+      background: #f9fafb;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="item-container">
+    <!-- Item details -->
+    <div class="item-card">
+      <img id="item-image" src="https://via.placeholder.com/350x250?text=No+Image+Available" alt="Item Image">
+      <div class="item-info">
+        <h2 id="item-name">Item Name</h2>
+        <p><strong>ID:</strong> <span id="item-id"></span></p>
+        <p><strong>Laboratory:</strong> <span id="item-lab"></span></p>
+        <p><strong>Condition:</strong> <span id="item-condition"></span></p>
+        <p><strong>Date Added:</strong> <span id="item-date"></span></p>
+      </div>
+    </div>
 
+    <!-- Reports -->
+    <div class="item-reports">
+      <h3>Reports</h3>
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Concern</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="item-reports-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script>
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
       authDomain: "fir-inventory-2e62a.firebaseapp.com",
@@ -25,253 +85,111 @@
       appId: "1:380849220480:web:5a43b227bab9f9a197af65",
       measurementId: "G-ERT87GL4XC"
     };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Get item ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const itemId = params.get('id');
+    let itemName = '';
 
-    function getItemId() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("id");
-    }
+    // Load item details
+    async function loadItemDetails() {
+      const doc = await db.collection('inventory').doc(itemId).get();
+      if (doc.exists) {
+        const data = doc.data();
+        itemName = data.Name || '';
+        document.getElementById('item-id').textContent = doc.id;
+        document.getElementById('item-name').textContent = itemName;
+        document.getElementById('item-lab').textContent = data.Laboratory || 'N/A';
+        document.getElementById('item-condition').textContent = data.Condition || 'Unknown';
+        document.getElementById('item-date').textContent = data.DateAdded || 'N/A';
+        document.getElementById('item-image').src = data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
 
-    async function fetchAndDisplayItem() {
-      const id = getItemId();
-      if (!id) {
-        document.getElementById("content").textContent = "No item ID provided.";
-        return;
-      }
-
-      try {
-        const docRef = doc(db, "inventory", id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const name = data.Name || "N/A";
-          const lab = data.Laboratory || "N/A";
-          const condition = data.Condition || "Unknown";
-          const dateAdded = data["Date added"] || "N/A";
-
-          document.getElementById("item-name").textContent = name;
-          document.getElementById("item-lab").textContent = lab;
-          document.getElementById("item-date").textContent = dateAdded;
-
-          // Condition dropdown
-          const conditionSelect = document.getElementById("item-condition");
-          conditionSelect.value = condition;
-          conditionSelect.addEventListener("change", async () => {
-            try {
-              await updateDoc(docRef, { Condition: conditionSelect.value });
-              alert("✅ Condition updated successfully!");
-            } catch (err) {
-              console.error("Error updating condition:", err);
-              alert("❌ Failed to update condition.");
-            }
-          });
-
-          // Image
-          const imgElem = document.getElementById("item-image");
-          imgElem.src = data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
-          imgElem.alt = name;
-
-          // Fetch related tickets
-          fetchReports(name);
-
-        } else {
-          document.getElementById("content").textContent = "Item not found.";
-        }
-      } catch (e) {
-        document.getElementById("content").textContent = "Error loading item info.";
-        console.error(e);
+        loadItemReports();
       }
     }
 
-    async function fetchReports(itemName) {
-      const reportsBody = document.getElementById("reports-body");
-      reportsBody.innerHTML = "<tr><td colspan='3'>Loading reports...</td></tr>";
+    // Load tickets linked to this item
+    async function loadItemReports() {
+      const reportsBody = document.getElementById('item-reports-body');
+      reportsBody.innerHTML = '';
 
-      try {
-        const q = query(collection(db, "tickets"), where("item", "==", itemName));
-        const snapshot = await getDocs(q);
+      const snapshot = await db.collection('tickets')
+        .where('item', '==', itemName)
+        .get();
 
-        if (snapshot.empty) {
-          reportsBody.innerHTML = "<tr><td colspan='3'>No reports found for this item.</td></tr>";
-          return;
-        }
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tr = document.createElement('tr');
+        const statusClass = (data.status || 'Pending').toLowerCase();
 
-        reportsBody.innerHTML = "";
-        snapshot.forEach(docSnap => {
-          const r = docSnap.data();
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${r.concern || "N/A"}</td>
-            <td>${r.description || "N/A"}</td>
-            <td class="status-${(r.status || "pending").toLowerCase()}">${r.status || "Pending"}</td>
-          `;
-          reportsBody.appendChild(tr);
+        tr.innerHTML = `
+          <td>${doc.id}</td>
+          <td>${escapeHtml(data.concern)}</td>
+          <td>
+            <input 
+              type="text" 
+              class="editable-description" 
+              value="${escapeHtml(data.description || '')}" 
+              data-id="${doc.id}">
+          </td>
+          <td>
+            <select class="ticket-status-dropdown ${statusClass}" data-id="${doc.id}">
+              <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="Resolved" ${data.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+              <option value="Closed" ${data.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </td>
+        `;
+        reportsBody.appendChild(tr);
+      });
+
+      attachListeners();
+    }
+
+    // Attach listeners to inputs & dropdowns
+    function attachListeners() {
+      document.querySelectorAll('.editable-description').forEach(input => {
+        input.addEventListener('blur', async (e) => {
+          const ticketId = e.target.dataset.id;
+          const newDesc = e.target.value.trim();
+          console.log(`Updating description for ${ticketId}: ${newDesc}`);
+          try {
+            await db.collection('tickets').doc(ticketId).update({ description: newDesc });
+          } catch (err) {
+            console.error('Error updating description:', err);
+          }
         });
-      } catch (err) {
-        console.error("Error fetching reports:", err);
-        reportsBody.innerHTML = "<tr><td colspan='3'>Error loading reports.</td></tr>";
-      }
+      });
+
+      document.querySelectorAll('.ticket-status-dropdown').forEach(select => {
+        select.addEventListener('change', async (e) => {
+          const ticketId = e.target.dataset.id;
+          const newStatus = e.target.value;
+          console.log(`Updating status for ${ticketId}: ${newStatus}`);
+          try {
+            await db.collection('tickets').doc(ticketId).update({ status: newStatus });
+            e.target.classList.remove('pending', 'resolved', 'closed');
+            e.target.classList.add(newStatus.toLowerCase());
+          } catch (err) {
+            console.error('Error updating status:', err);
+          }
+        });
+      });
     }
 
-    window.addEventListener("DOMContentLoaded", fetchAndDisplayItem);
+    // Escape HTML utility
+    function escapeHtml(s = '') {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    loadItemDetails();
   </script>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: #f5f7fa;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      padding: 40px 20px;
-      min-height: 100vh;
-    }
-    .container {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-      max-width: 900px;
-      width: 100%;
-      padding: 30px 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin-bottom: 25px;
-      font-weight: 700;
-      color: #0078d7;
-      text-align: center;
-    }
-    #item-image {
-      width: 100%;
-      max-width: 500px;
-      height: auto;
-      border-radius: 8px;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 30px;
-      background: #ddd;
-    }
-    .info-list {
-      width: 100%;
-      list-style: none;
-      padding: 0;
-      margin: 0 0 20px 0;
-      font-size: 1.1rem;
-    }
-    .info-list li {
-      padding: 12px 0;
-      border-bottom: 1px solid #e0e0e0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .info-list li:last-child {
-      border-bottom: none;
-    }
-    .label {
-      font-weight: 600;
-      color: #555;
-    }
-    .value {
-      font-weight: 700;
-      color: #222;
-    }
-    select#item-condition {
-      padding: 6px 10px;
-      border: 1.5px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: #fff;
-      cursor: pointer;
-    }
-    /* Reports Section */
-    .reports-section {
-      width: 100%;
-      margin-top: 20px;
-    }
-    .reports-section h2 {
-      margin-bottom: 15px;
-      font-size: 1.3rem;
-      color: #0078d7;
-      text-align: left;
-    }
-    .reports-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      font-size: 0.95rem;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-    .reports-table th,
-    .reports-table td {
-      padding: 10px 12px;
-      border: 1px solid #e0e0e0;
-      text-align: left;
-    }
-    .reports-table th {
-      background: #2563eb;
-      color: #fff;
-      font-weight: 600;
-    }
-    .reports-table tr:nth-child(even) {
-      background: #f9fafb;
-    }
-    /* Status colors */
-    .status-pending { color: #f39c12; font-weight: 700; }
-    .status-solved { color: #27ae60; font-weight: 700; }
-    .status-disregarded { color: #e74c3c; font-weight: 700; }
-    /* Responsive */
-    @media (max-width: 600px) {
-      body { padding: 20px 10px; }
-      .container { padding: 20px; }
-      .reports-table { font-size: 0.85rem; display: block; overflow-x: auto; }
-      .info-list li { flex-direction: column; align-items: flex-start; }
-      .label, .value { display: block; }
-      #item-image { max-width: 100%; }
-    }
-  </style>
-</head>
-<body>
-  <main class="container">
-    <h1>Inventory Item Details</h1>
-    <img id="item-image" src="https://via.placeholder.com/350x250?text=Loading..." alt="Loading image..." />
-    <ul class="info-list" id="content">
-      <li><span class="label">Name:</span> <span class="value" id="item-name"></span></li>
-      <li><span class="label">Laboratory:</span> <span class="value" id="item-lab"></span></li>
-      <li>
-        <span class="label">Condition:</span>
-        <select id="item-condition">
-          <option value="Good">Good</option>
-          <option value="Deteriorating">Deteriorating</option>
-          <option value="For replacement">For replacement</option>
-        </select>
-      </li>
-      <li><span class="label">Date Added:</span> <span class="value" id="item-date"></span></li>
-    </ul>
-
-    <section class="reports-section">
-      <h2>Reports</h2>
-      <table class="reports-table">
-        <thead>
-          <tr>
-            <th>Concern</th>
-            <th>Description</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="reports-body">
-          <tr><td colspan="3">Loading reports...</td></tr>
-        </tbody>
-      </table>
-    </section>
-  </main>
 </body>
 </html>

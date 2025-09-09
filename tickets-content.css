@@ -1,223 +1,224 @@
-/* ---------- Table Styles (scoped to avoid global clashes) ---------- */
-.tickets-container { padding: 18px; font-family: Arial, sans-serif; }
-.tickets-container .tickets-table,
-.tickets-container table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: #111;       /* Dark background */
-    color: white;
-    border: 1px solid #444;
-    font-size: 16px;
+/* Tickets Page Styling - Matching Inventory */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #000;
+  background: url('Assets/BG_Inventory.jpg') no-repeat center center fixed;
+  background-size: cover;
 }
 
-.tickets-container th,
-.tickets-container td {
-    padding: 12px 16px;
-    border: 1px solid #333;
-    text-align: left;
+/* Wrapper - keeps table centered and limited width */
+.tickets-wrapper {
+  max-width: 1000px; /* ✅ same size as inventory */
+  margin: 40px auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  overflow-x: auto;
 }
 
-.tickets-container th {
-    background-color: #222;       /* Darker header */
-    color: #ffd700;               /* Gold header text */
-    font-weight: bold;
-    text-transform: uppercase;
+/* Search bar */
+.tickets-search {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
 }
 
-.tickets-container tr:nth-child(even) {
-    background-color: #1a1a1a;   /* Even row background */
+.tickets-search input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  width: 250px;
+  transition: border 0.2s ease;
 }
 
-.tickets-container tr:hover {
-    background-color: #333333;   /* Hover highlight */
+.tickets-search input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
-/* Status colors */
-.tickets-container .status-pending { color: #f39c12; font-weight: 700; }
-.tickets-container .status-solved { color: #27ae60; font-weight: 700; }
-.tickets-container .status-disregarded { color: #e74c3c; font-weight: 700; }
-
-/* Optional monospace style for ID column */
-.tickets-container td:first-child {
-    font-family: monospace;
-    letter-spacing: 1.2px;
-    color: #bbb;
-    width: 90px;
+/* Table */
+.tickets-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.05);
 }
 
-/* ---------- Modal Styles (unique prefix: tc-) ---------- */
-.tc-modal {
-    display: none; /* hidden by default */
-    position: fixed;
-    z-index: 2147483647; /* extremely high to avoid being behind anything */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.55); /* overlay */
+.tickets-table th,
+.tickets-table td {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #000;
+  border: none; /* ✅ no grid lines */
 }
 
-/* make selector very specific to beat other rules */
-#tc-ticketModal.tc-modal .tc-modal__content {
-    background-color: #ffffff !important;
-    margin: 6% auto !important;
-    padding: 18px !important;
-    width: 460px !important;
-    max-width: calc(100% - 40px) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.35) !important;
-    animation: tc-modalFadeIn 220ms ease-out !important;
-}
-
-/* close button */
-.tc-modal__close,
-#tc-closeModal {
-    background: transparent;
-    border: 0;
-    font-size: 26px;
-    line-height: 1;
-    color: #555;
-    cursor: pointer;
-    float: right;
-}
-
-.tc-modal__close:hover,
-#tc-closeModal:hover { color: #000; }
-
-/* form controls inside modal */
-.tc-modal__content input,
-.tc-modal__content textarea,
-.tc-modal__content select {
-    width: 100%;
-    padding: 8px 10px;
-    margin-top: 8px;
-    margin-bottom: 12px;
-    box-sizing: border-box;
-    border: 1px solid #cfcfcf;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-/* submit button */
-.tc-modal__content .btn-primary,
-#tc-submitTicketBtn {
-    background-color: #2f9d58;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.tc-modal__content .btn-primary:hover,
-#tc-submitTicketBtn:hover {
-    background-color: #23884a;
-}
-
-/* animation */
-@keyframes tc-modalFadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* small-screen tweaks */
-@media (max-width: 520px) {
-    #tc-ticketModal.tc-modal .tc-modal__content {
-        width: 92% !important;
-        margin: 10% auto !important;
-        padding: 14px !important;
-    }
-}
-
-/* ---------------------------
-   Force modal text to be black
-   (specific and non-destructive)
-   --------------------------- */
-#tc-ticketModal.tc-modal .tc-modal__content,
-#tc-ticketModal.tc-modal .tc-modal__content label,
-#tc-ticketModal.tc-modal .tc-modal__content input,
-#tc-ticketModal.tc-modal .tc-modal__content textarea,
-#tc-ticketModal.tc-modal .tc-modal__content select,
-#tc-ticketModal.tc-modal .tc-modal__content option {
-  color: #000 !important;
-  background-color: #fff !important; /* ensures inputs are white so black text is readable */
-}
-
-/* keep button text colors (don’t override buttons) */
-/* ensure close "×" is dark enough */
-#tc-closeModal,
-.tc-modal__close {
-  color: #333 !important;
-}
-
-/* placeholder color (optional, subtle) */
-#tc-ticketModal.tc-modal .tc-modal__content input::placeholder,
-#tc-ticketModal.tc-modal .tc-modal__content textarea::placeholder {
-  color: #666 !important;
-}
-
-/* Style for the Create Ticket button */
-#createTicketBtn, #tc-createTicketBtn {
-  background-color: #007bff;     /* Bright blue background */
-  color: white;                  /* White text */
-  font-weight: bold;
-  font-size: 16px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
-  display: inline-block;
-}
-
-#createTicketBtn:hover, #tc-createTicketBtn:hover {
-  background-color: #0056b3;     /* Darker blue on hover */
-  box-shadow: 0 5px 12px rgba(0, 86, 179, 0.6);
-}
-
-#createTicketBtn:active, #tc-createTicketBtn:active {
-  background-color: #00408d;     /* Even darker when clicked */
-  box-shadow: 0 2px 4px rgba(0, 64, 141, 0.8);
-  transform: translateY(1px);
-}
-/* DELETE BUTTON */
-.tickets-container .btn-delete {
-  padding: 6px 10px;
-  margin-right: 6px;
-  font-size: 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.tickets-table th {
+  background: #2563eb;
+  color: #fff;
   font-weight: 600;
-  transition: background-color 0.3s ease;
-  user-select: none;
-  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.tickets-container .btn-delete {
-  background-color: #dc3545; /* danger/red */
+.tickets-table tr:nth-child(even) {
+  background: #f9fafb;
 }
 
-.tickets-container .btn-delete:hover {
-  background-color: #a71d2a;
+.tickets-table tr:hover {
+  background: #eef2ff;
 }
 
-.tickets-container th:last-child,
-.tickets-container td:last-child {
-  min-width: 130px;
+/* Pagination */
+.tickets-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+  gap: 8px;
 }
 
-/* Center the Actions header text */
-.tickets-container th:last-child {
-  text-align: center;
+.tickets-pagination button {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
-/* Center the Delete button inside the cell */
-.tickets-container td:last-child {
-  text-align: center;
+.tickets-pagination button:hover {
+  background: #1e4fc4;
+  transform: translateY(-1px);
+}
+
+.tickets-pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ✅ Buttons - Inventory style */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-primary::before {
+  content: "➕";
+  font-size: 1.1rem;
+}
+
+.btn-primary:hover {
+  background-color: #1e4fc4;
+  transform: translateY(-1px);
+}
+
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-delete::before {
+  content: "🗑️";
+  font-size: 1rem;
+}
+
+.btn-delete:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* ✅ Modal (inventory-style) */
+.tc-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tc-modal__content {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  color: #000;
+}
+
+.tc-modal__content h3 {
+  color: #000;
+  margin-top: 0;
+}
+
+.tc-modal__close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  font-size: 1.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.tc-modal__close:hover {
+  color: #000;
+}
+
+.tc-modal label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #000;
+}
+
+.tc-modal input,
+.tc-modal select,
+.tc-modal textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #000;
+}
+
+.tc-modal button {
+  margin-top: 15px;
 }

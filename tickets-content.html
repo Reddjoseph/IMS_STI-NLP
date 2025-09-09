@@ -17,6 +17,7 @@
         <th>Description</th>
         <th>Status</th>
         <th>Actions</th>
+        <th>Feedback</th>
       </tr>
     </thead>
     <tbody id="tc-ticketsTableBody">
@@ -49,5 +50,14 @@
     <!-- Lab filter is dynamically inserted by JS -->
 
     <button id="tc-submitTicketBtn" class="btn-primary">Submit</button>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="viewFeedbackModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content">
+    <button id="closeViewFeedback" class="tc-modal__close">&times;</button>
+    <h3>Admin Feedback</h3>
+    <p id="feedbackContent">No feedback yet.</p>
   </div>
 </div>

@@ -33,6 +33,11 @@ function waitForElement(selector, timeout = 2500) {
     const prevPageBtn = document.getElementById('tc-prevPage');
     const nextPageBtn = document.getElementById('tc-nextPage');
 
+    // Feedback modal (view)
+    const viewFeedbackModal = document.getElementById('viewFeedbackModal');
+    const closeViewFeedback = document.getElementById('closeViewFeedback');
+    const feedbackContent = document.getElementById('feedbackContent');
+
     if (!ticketsTableBody || !createTicketBtn || !modal || !ticketItem) {
       console.warn('tickets-content: missing expected elements, aborting init.');
       return;
@@ -68,6 +73,7 @@ function waitForElement(selector, timeout = 2500) {
         return snapshot.docs.map(d => {
           const data = d.data();
           return {
+            id: d.id,
             name: data.Name ?? d.id,
             lab: data.Laboratory ?? ''
           };
@@ -92,8 +98,9 @@ function waitForElement(selector, timeout = 2500) {
 
       items.forEach(it => {
         const opt = document.createElement('option');
-        opt.value = it.name;
-        opt.textContent = it.name + (it.lab ? ` (${it.lab})` : '');
+        opt.value = it.id;        // itemId
+        opt.textContent = `${it.name} (${it.lab || 'No Lab'})`;
+        opt.dataset.name = it.name; // store name
         ticketItem.appendChild(opt);
       });
     }
@@ -124,12 +131,27 @@ function waitForElement(selector, timeout = 2500) {
           <td>
             <button class="btn-delete" data-index="${index}" title="Delete Ticket">Delete</button>
           </td>
+          <td>
+            <button class="btn-feedback" data-feedback="${escapeHtml(t.feedback || 'No feedback yet')}">
+              View Feedback
+            </button>
+          </td>
         `;
         ticketsTableBody.appendChild(tr);
       });
 
+      // Attach actions
       ticketsTableBody.querySelectorAll('.btn-delete').forEach((btn, idx) => {
         btn.addEventListener('click', () => onDeleteTicket((currentPage - 1) * pageSize + idx));
+      });
+
+      ticketsTableBody.querySelectorAll('.btn-feedback').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const feedbackText = btn.dataset.feedback || 'No feedback yet.';
+          feedbackContent.textContent = feedbackText;
+          viewFeedbackModal.style.display = 'flex';
+          viewFeedbackModal.setAttribute('aria-hidden', 'false');
+        });
       });
 
       prevPageBtn.disabled = currentPage === 1;
@@ -212,22 +234,27 @@ function waitForElement(selector, timeout = 2500) {
       }
     });
 
+    // ✅ Fixed submit handler
     submitTicketBtn.addEventListener('click', async () => {
       const concern = ticketConcern.value.trim();
       const description = ticketDescription.value.trim();
-      const itemName = ticketItem.value;
 
-      if (!concern || !description || !itemName) {
+      const selectedOption = ticketItem.options[ticketItem.selectedIndex];
+      const itemId = selectedOption?.value;
+      const itemName = selectedOption?.dataset.name;
+
+      if (!concern || !description || !itemId || !itemName) {
         alert('Please fill in all fields.');
         return;
       }
 
       const newTicket = {
         item: itemName,
-        itemId,
+        itemId: itemId,
         concern,
         description,
         status: 'Pending',
+        feedback: '', // initialize empty feedback
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
@@ -241,14 +268,21 @@ function waitForElement(selector, timeout = 2500) {
 
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
-      } catch {
+      } catch (err) {
+        console.error("Ticket save failed:", err);
         alert('Failed to save ticket. Please try again.');
       }
     });
 
+    // Feedback modal close
+    closeViewFeedback.addEventListener('click', () => {
+      viewFeedbackModal.style.display = 'none';
+      viewFeedbackModal.setAttribute('aria-hidden', 'true');
+    });
+
     // Initial render
     renderTickets();
-    console.log('tickets-content initialized (with search + pagination + dropdown)');
+    console.log('tickets-content initialized (with search + pagination + dropdown + feedback)');
   } catch (err) {
     console.error('tickets-content init error:', err);
   }

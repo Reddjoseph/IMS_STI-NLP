@@ -1,4 +1,4 @@
-// ✅ item.js (using Firebase compat v9 like index.html)
+// ✅ item.js (using Firebase compat v9)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
@@ -17,6 +17,7 @@ const db = firebase.firestore();
 const params = new URLSearchParams(window.location.search);
 const itemId = params.get('id');
 let itemName = '';
+let activeFeedbackTicketId = null;
 
 async function loadItemDetails() {
   try {
@@ -47,13 +48,12 @@ async function loadItemReports() {
   const reportsBody = document.getElementById('item-reports-body');
   reportsBody.innerHTML = '';
 
-  // ✅ Link by itemId instead of itemName
-  const snapshot = await db.collection('tickets')
+  let snapshot = await db.collection('tickets')
     .where('itemId', '==', itemId)
     .get();
 
   if (snapshot.empty) {
-    reportsBody.innerHTML = `<tr><td colspan="4">No reports found.</td></tr>`;
+    reportsBody.innerHTML = `<tr><td colspan="5">No reports found.</td></tr>`;
     return;
   }
 
@@ -79,6 +79,11 @@ async function loadItemReports() {
           <option value="Closed" ${data.status === 'Closed' ? 'selected' : ''}>Closed</option>
         </select>
       </td>
+      <td>
+        <button class="feedback-btn" data-id="${doc.id}">
+          Feedback
+        </button>
+      </td>
     `;
     reportsBody.appendChild(tr);
   });
@@ -87,6 +92,7 @@ async function loadItemReports() {
 }
 
 function attachListeners() {
+  // Editable description
   document.querySelectorAll('.editable-description').forEach(input => {
     input.addEventListener('blur', async (e) => {
       const ticketId = e.target.dataset.id;
@@ -99,6 +105,7 @@ function attachListeners() {
     });
   });
 
+  // Status dropdown
   document.querySelectorAll('.ticket-status-dropdown').forEach(select => {
     select.addEventListener('change', async (e) => {
       const ticketId = e.target.dataset.id;
@@ -112,7 +119,39 @@ function attachListeners() {
       }
     });
   });
+
+  // ✅ Feedback button
+  document.querySelectorAll('.feedback-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      activeFeedbackTicketId = e.target.dataset.id;
+      document.getElementById('feedbackModal').style.display = 'flex';
+      document.getElementById('feedbackText').value = '';
+      document.getElementById('feedbackModal').setAttribute('aria-hidden', 'false');
+    });
+  });
 }
+
+// ✅ Feedback modal controls
+document.getElementById('closeFeedbackModal').addEventListener('click', () => {
+  document.getElementById('feedbackModal').style.display = 'none';
+  document.getElementById('feedbackModal').setAttribute('aria-hidden', 'true');
+});
+
+document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
+  const text = document.getElementById('feedbackText').value.trim();
+  if (!text || !activeFeedbackTicketId) return;
+
+  try {
+    await db.collection('tickets').doc(activeFeedbackTicketId).update({
+      feedback: text
+    });
+    alert('Feedback saved.');
+    document.getElementById('feedbackModal').style.display = 'none';
+    document.getElementById('feedbackModal').setAttribute('aria-hidden', 'true');
+  } catch (err) {
+    console.error('Error saving feedback:', err);
+  }
+});
 
 function escapeHtml(s = '') {
   return String(s)

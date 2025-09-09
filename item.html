@@ -45,3 +45,31 @@
   <script src="item.js"></script>
 </body>
 </html>
+
+<!-- Reports -->
+<div class="item-reports">
+  <h3>Reports</h3>
+  <table class="reports-table">
+    <thead>
+      <tr>
+        <th>Ticket ID</th>
+        <th>Concern</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Actions</th> <!-- ✅ New -->
+      </tr>
+    </thead>
+    <tbody id="item-reports-body"></tbody>
+  </table>
+</div>
+
+<!-- ✅ Feedback Modal -->
+<div id="feedbackModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content">
+    <button id="closeFeedbackModal" class="tc-modal__close">&times;</button>
+    <h3>Submit Feedback</h3>
+
+    <textarea id="feedbackText" rows="4" placeholder="Enter your feedback..."></textarea>
+    <button id="submitFeedbackBtn" class="btn-primary">Save Feedback</button>
+  </div>
+</div>

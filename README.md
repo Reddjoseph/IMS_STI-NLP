@@ -1,4 +1,8 @@
 # InventoryManagementSystem
+## Important details
+- [Latest Active Site](https://reddjoseph.github.io/IMS_STI-NLP/)
+
+
 ## PATCH 1.0
 - Initialization of database and back-end with very minor details for UI
 
@@ -34,3 +38,14 @@
 - Added inventory dashboard
 - Reports are now generated
 - Updated the U.I for inventory as well to be in light mode
+
+## PATCH 8.0
+- Modified Tickets UI to be uniform with the other tables
+- Modified the entire codebase to have the same structure all over (for consistency)
+- Users now go to HOMEPAGE when logged out
+- Added QR scanning functionality
+- Added per item page (redirection when QR is scanned)
+- Added feedback system (for ticket response)
+Feedback System
+- Featuring detailed logs (for security and precision)
+- Specification of responder

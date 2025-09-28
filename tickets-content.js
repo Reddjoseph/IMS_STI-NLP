@@ -1,4 +1,4 @@
-// ✅ tickets-content.js (with Feedback Timeline for users)
+// ✅ tickets-content.js (with Notifications + Full Data)
 
 function waitForElement(selector, timeout = 2500) {
   return new Promise((resolve, reject) => {
@@ -39,8 +39,16 @@ function waitForElement(selector, timeout = 2500) {
     const closeViewFeedback = document.getElementById("closeViewFeedback");
     const feedbackTimeline = document.getElementById("feedbackTimeline");
 
+    // Description modal
+    const viewDescriptionModal = document.getElementById("viewDescriptionModal");
+    const closeViewDescription = document.getElementById("closeViewDescription");
+    const fullDescriptionText = document.getElementById("fullDescriptionText");
+
     const ticketsCollection = firebase.firestore().collection("tickets");
     const inventoryCollection = firebase.firestore().collection("inventory");
+    const notificationsCollection = firebase.firestore().collection("notifications");
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
     async function getTickets() {
       try {
@@ -109,6 +117,15 @@ function waitForElement(selector, timeout = 2500) {
       return array.slice(start, start + size);
     }
 
+    function escapeHtml(s = "") {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
     function renderTickets() {
       ticketsTableBody.innerHTML = "";
       const pageTickets = paginate(filteredTickets, currentPage, pageSize);
@@ -116,31 +133,43 @@ function waitForElement(selector, timeout = 2500) {
       pageTickets.forEach((t, index) => {
         const tr = document.createElement("tr");
         const statusClass = "status-" + (t.status || "pending").toLowerCase();
+
+        const desc = t.description || "";
+        const showButton = desc.length > 80;
+
         tr.innerHTML = `
           <td>${t.id}</td>
           <td>${escapeHtml(t.item)}</td>
           <td>${escapeHtml(t.concern)}</td>
-          <td>${escapeHtml(t.description)}</td>
+          <td class="ticket-description">
+            ${escapeHtml(desc)}
+            ${
+              showButton
+                ? `<button class="btn-view-description" data-desc="${escapeHtml(desc)}">
+                     View Details
+                   </button>`
+                : ""
+            }
+          </td>
           <td class="${statusClass}">${escapeHtml(t.status)}</td>
           <td>
             <button class="btn-delete" data-index="${index}" title="Delete Ticket">Delete</button>
           </td>
           <td>
-            <button class="btn-feedback" data-id="${t.id}">
-              View Feedback
-            </button>
+            <button class="btn-feedback" data-id="${t.id}">View Feedback</button>
           </td>
         `;
         ticketsTableBody.appendChild(tr);
       });
 
+      // Delete
       ticketsTableBody.querySelectorAll(".btn-delete").forEach((btn, idx) => {
         btn.addEventListener("click", () =>
           onDeleteTicket((currentPage - 1) * pageSize + idx)
         );
       });
 
-      // ✅ View feedback timeline
+      // Feedback
       ticketsTableBody.querySelectorAll(".btn-feedback").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const ticketId = btn.dataset.id;
@@ -166,19 +195,21 @@ function waitForElement(selector, timeout = 2500) {
         });
       });
 
+      // Full description
+      ticketsTableBody.querySelectorAll(".btn-view-description").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const desc = btn.dataset.desc || "No description available.";
+          fullDescriptionText.textContent = desc;
+          viewDescriptionModal.style.display = "flex";
+          viewDescriptionModal.setAttribute("aria-hidden", "false");
+        });
+      });
+
       prevPageBtn.disabled = currentPage === 1;
       nextPageBtn.disabled = currentPage * pageSize >= filteredTickets.length;
     }
 
-    function escapeHtml(s = "") {
-      return String(s)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-
+    // Search
     searchInput.addEventListener("input", () => {
       const q = searchInput.value.toLowerCase();
       filteredTickets = tickets.filter(
@@ -243,9 +274,13 @@ function waitForElement(selector, timeout = 2500) {
         modal.style.display = "none";
         modal.setAttribute("aria-hidden", "true");
       }
+      if (e.target === viewDescriptionModal) {
+        viewDescriptionModal.style.display = "none";
+        viewDescriptionModal.setAttribute("aria-hidden", "true");
+      }
     });
 
-    // ✅ Save new ticket
+    // ✅ Save new ticket + notification
     submitTicketBtn.addEventListener("click", async () => {
       const concern = ticketConcern.value.trim();
       const description = ticketDescription.value.trim();
@@ -258,19 +293,39 @@ function waitForElement(selector, timeout = 2500) {
         return;
       }
 
+      const currentUser = auth.currentUser;
+      let role = "User";
+      if (currentUser) {
+        const userDoc = await db.collection("users").doc(currentUser.uid).get();
+        role = userDoc.exists ? userDoc.data().role : "User";
+      }
+
       const newTicket = {
         item: itemName,
         itemId,
         concern,
         description,
         status: "Pending",
-        feedbackHistory: [], // ✅ start with empty array
+        feedbackHistory: [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        issuedBy: currentUser?.email || "Unknown user",
+        issuedById: currentUser?.uid || null,
+        createdByRole: role,
       };
 
       try {
         const newId = await saveTicket(newTicket);
         newTicket.id = newId;
+
+        // 🔔 Create notification for Admins
+        await notificationsCollection.add({
+          message: `${newTicket.issuedBy} issued a ticket regarding ${itemName}`,
+          itemName: itemName,
+          issuedBy: newTicket.issuedBy,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdByRole: role,
+        });
+
         tickets.unshift(newTicket);
         filteredTickets = [...tickets];
         currentPage = 1;
@@ -290,7 +345,12 @@ function waitForElement(selector, timeout = 2500) {
       viewFeedbackModal.setAttribute("aria-hidden", "true");
     });
 
-    // Initial render
+    // Close description modal
+    closeViewDescription.addEventListener("click", () => {
+      viewDescriptionModal.style.display = "none";
+      viewDescriptionModal.setAttribute("aria-hidden", "true");
+    });
+
     renderTickets();
   } catch (err) {
     console.error("tickets-content init error:", err);

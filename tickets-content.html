@@ -32,6 +32,41 @@
   </div>
 </div>
 
+<!-- FAQ Section (inside wrapper for uniform width) -->
+<div class="tickets-faq">
+  <h3>Frequently Asked Questions</h3>
+
+  <div class="faq-item">
+    <button class="faq-question">
+      How long should my tickets be resolved?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>
+        Administrators are working hard to resolve your submitted tickets.
+        Most concerns are addressed within <strong>3–5 working days</strong>,
+        depending on the complexity of the issue. For urgent matters, please
+        ensure you provide clear details so they can assist you faster.
+      </p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question">
+      How will I know if there’s an update on my ticket?
+      <span class="faq-icon">+</span>
+    </button>
+    <div class="faq-answer">
+      <p>
+        You can check your ticket’s <strong>Status</strong> in the table. 
+        When administrators leave remarks or updates, they appear in the 
+        <strong>Feedback</strong> section. For major progress, you may also 
+        receive an email or notification, depending on your account settings.
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- Ticket Modal -->
 <div id="tc-ticketModal" class="tc-modal" aria-hidden="true">
   <div class="tc-modal__content">
@@ -47,8 +82,6 @@
     <label for="tc-ticketItem">Item</label>
     <select id="tc-ticketItem"></select>
 
-    <!-- Lab filter is dynamically inserted by JS -->
-
     <button id="tc-submitTicketBtn" class="btn-primary">Submit</button>
   </div>
 </div>
@@ -59,5 +92,14 @@
     <button id="closeViewFeedback" class="tc-modal__close">&times;</button>
     <h3>Admin Feedback</h3>
     <div id="feedbackTimeline"></div>
+  </div>
+</div>
+
+<!-- Ticket Description Modal -->
+<div id="viewDescriptionModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content">
+    <button id="closeViewDescription" class="tc-modal__close">&times;</button>
+    <h3>Ticket Description</h3>
+    <p id="fullDescriptionText"></p>
   </div>
 </div>

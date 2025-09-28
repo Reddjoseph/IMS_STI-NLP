@@ -16,7 +16,6 @@ body {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-  overflow-x: auto;
 }
 
 /* Search bar */
@@ -48,6 +47,16 @@ body {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+  display: block;        /* ✅ make it scrollable as block */
+  max-height: 400px;     /* adjust height */
+  overflow-y: auto;      /* vertical scrollbar inside table */
+}
+
+.tickets-table thead {
+  position: sticky;
+  top: 0;
+  background: #2563eb;
+  z-index: 2;
 }
 
 .tickets-table th,
@@ -313,4 +322,137 @@ body {
   bottom: 0;
   width: 2px;
   background: #dbeafe;
+}
+
+/* FAQ Section */
+.tickets-faq {
+  margin-top: 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 20px;
+}
+
+.tickets-faq h3 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  color: #2563eb;
+}
+
+.faq-item {
+  border-top: 1px solid #e5e7eb;
+}
+
+.faq-item:first-child {
+  border-top: none;
+}
+
+.faq-question {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #111;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-question:hover {
+  color: #2563eb;
+}
+
+.faq-icon {
+  font-weight: bold;
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 12px;
+}
+
+.faq-answer p {
+  margin: 12px 0;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+.faq-item.active .faq-answer {
+  max-height: 200px; /* adjust if longer text */
+  padding: 12px;
+}
+
+.faq-item.active .faq-icon {
+  transform: rotate(45deg); /* plus turns into x */
+  color: #2563eb;
+}
+
+.tickets-faq {
+  max-width: 1000px;   /* match tickets-wrapper */
+  margin: 30px auto;   /* center like tickets */
+}
+/* ... your existing styles ... */
+
+/* Full Description Modal */
+#viewDescriptionModal .tc-modal__content {
+  max-width: 500px;
+  text-align: left;
+}
+
+#fullDescriptionText {
+  white-space: pre-wrap; /* keeps line breaks */
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* View Details button (blue style like others) */
+.btn-view-description {
+  display: block;          
+  margin-top: 6px;        
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  text-align: left;
+}
+
+.btn-view-description:hover {
+  background-color: #1e4fc4;
+  transform: translateY(-1px);
+}
+
+/* Limit description to 1 line with ellipsis */
+.ticket-description {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+/* Center align Actions column */
+.tickets-table th:nth-child(6),
+.tickets-table td:nth-child(6) {
+  text-align: center;
+}
+
+.tickets-table th:nth-child(7),
+.tickets-table td:nth-child(7) {
+  text-align: center;
 }

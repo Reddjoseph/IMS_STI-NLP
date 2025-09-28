@@ -27,20 +27,43 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ✅ Fetch and display inventory
+/* -------------------------
+   Helpers for Date/Time
+------------------------- */
+function nowLocalDateTimeString() {
+  const now = new Date();
+  return now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0") + " " +
+    String(now.getHours()).padStart(2, "0") + ":" +
+    String(now.getMinutes()).padStart(2, "0");
+}
+
+function parseStoredDateToLocal(dateStr) {
+  if (!dateStr) return "N/A";
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0") + " " +
+    String(d.getHours()).padStart(2, "0") + ":" +
+    String(d.getMinutes()).padStart(2, "0");
+}
+
+/* -------------------------
+   Fetch Inventory
+------------------------- */
 async function fetchInventory() {
   const root = document.getElementById("inventory-root");
-  root.innerHTML = ""; // Clear previous content
+  root.innerHTML = "";
 
-  // Get stat display elements
   const totalCountElem = document.getElementById("total-items-count");
   const deterioratingCountElem = document.getElementById("deteriorating-items-count");
   const replacementCountElem = document.getElementById("replacement-items-count");
 
-  // Reset stats while loading
-  if (totalCountElem) totalCountElem.textContent = '0';
-  if (deterioratingCountElem) deterioratingCountElem.textContent = '0';
-  if (replacementCountElem) replacementCountElem.textContent = '0';
+  if (totalCountElem) totalCountElem.textContent = "0";
+  if (deterioratingCountElem) deterioratingCountElem.textContent = "0";
+  if (replacementCountElem) replacementCountElem.textContent = "0";
 
   try {
     const inventoryCol = collection(db, "inventory");
@@ -51,29 +74,24 @@ async function fetchInventory() {
       return;
     }
 
-    // --- Calculate stats ---
     const allItems = [];
     snapshot.forEach(docSnap => {
-      const item = docSnap.data();
-      allItems.push(item);
+      allItems.push({ id: docSnap.id, ...docSnap.data() });
     });
 
     const totalItems = allItems.length;
     const deterioratingItems = allItems.filter(item => item.Condition === "Deteriorating").length;
     const forReplacementItems = allItems.filter(item => item.Condition === "For replacement").length;
 
-    // Update stats in the UI
     if (totalCountElem) totalCountElem.textContent = totalItems;
     if (deterioratingCountElem) deterioratingCountElem.textContent = deterioratingItems;
     if (replacementCountElem) replacementCountElem.textContent = forReplacementItems;
 
-    // Create filter container
     const filterContainer = document.createElement("div");
     filterContainer.style.display = "flex";
     filterContainer.style.gap = "10px";
     filterContainer.style.marginBottom = "10px";
 
-    // Search Input
     const searchInput = document.createElement("input");
     searchInput.type = "search";
     searchInput.placeholder = "Search Item...";
@@ -81,10 +99,8 @@ async function fetchInventory() {
     searchInput.style.flex = "1";
     filterContainer.appendChild(searchInput);
 
-    // Laboratory Filter
     const labFilter = document.createElement("select");
     labFilter.id = "filter-lab";
-    labFilter.style.minWidth = "150px";
     labFilter.innerHTML = `
       <option value="">All Laboratories</option>
       <option value="Laboratory 1">Laboratory 1</option>
@@ -94,10 +110,8 @@ async function fetchInventory() {
     `;
     filterContainer.appendChild(labFilter);
 
-    // Condition Filter
     const conditionFilter = document.createElement("select");
     conditionFilter.id = "filter-condition";
-    conditionFilter.style.minWidth = "180px";
     conditionFilter.innerHTML = `
       <option value="">All Conditions</option>
       <option value="Good">Good</option>
@@ -108,11 +122,9 @@ async function fetchInventory() {
 
     root.appendChild(filterContainer);
 
-    // Create table
     const table = document.createElement("table");
     table.className = "inventory-table";
 
-    // Table header - added Actions column
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
     ["ID", "Name", "Laboratory", "Date Added", "Condition", "Actions"].forEach(text => {
@@ -123,134 +135,85 @@ async function fetchInventory() {
     thead.appendChild(headRow);
     table.appendChild(thead);
 
-    // Table body
     const tbody = document.createElement("tbody");
-
-    // Store rows for filtering
     const rows = [];
 
-    let i = 0;
-    snapshot.forEach(docSnap => {
-      const item = allItems[i];
-      i++;
-
+    allItems.forEach(item => {
       const tr = document.createElement("tr");
 
-      const idShort = docSnap.id.slice(-6); // last 6 chars of ID
       const idTd = document.createElement("td");
-      idTd.textContent = idShort;
+      idTd.textContent = item.id.slice(-6);
 
-      const name = item.Name || "Unnamed";
-      const lab = item.Laboratory || "Unknown";
-      const dateAdded = item["Date added"] || "N/A";
-      const condition = item.Condition || "Unknown";
-
-const nameTd = document.createElement("td");
-const nameLink = document.createElement("a");
-nameLink.href = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${docSnap.id}`;
-nameLink.textContent = name;
-
-// Default style (plain black text)
-nameLink.style.color = "#000";
-nameLink.style.textDecoration = "none";
-nameLink.style.cursor = "pointer";
-nameLink.style.fontWeight = "normal";
-nameLink.target = "_blank"; // open in new tab
-
-// Hover effect: blue + bold
-nameLink.addEventListener("mouseover", () => {
-  nameLink.style.color = "#2563eb";
-  nameLink.style.fontWeight = "bold";
-});
-nameLink.addEventListener("mouseout", () => {
-  nameLink.style.color = "#000";
-  nameLink.style.fontWeight = "normal";
-});
-
-nameTd.appendChild(nameLink);
-
-
+      const nameTd = document.createElement("td");
+      const nameLink = document.createElement("a");
+      nameLink.href = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${item.id}`;
+      nameLink.textContent = item.Name || "Unnamed";
+      nameLink.style.color = "#000";
+      nameLink.style.textDecoration = "none";
+      nameLink.target = "_blank";
+      nameLink.addEventListener("mouseover", () => {
+        nameLink.style.color = "#2563eb";
+        nameLink.style.fontWeight = "bold";
+      });
+      nameLink.addEventListener("mouseout", () => {
+        nameLink.style.color = "#000";
+        nameLink.style.fontWeight = "normal";
+      });
+      nameTd.appendChild(nameLink);
 
       const labTd = document.createElement("td");
-      labTd.textContent = lab;
+      labTd.textContent = item.Laboratory || "Unknown";
 
       const dateTd = document.createElement("td");
-      dateTd.textContent = dateAdded;
+      dateTd.textContent = parseStoredDateToLocal(item["Date added"]);
 
       const condTd = document.createElement("td");
-      const conditionClass = condition.toLowerCase().replace(/\s/g, "-");
-      condTd.textContent = condition;
-      condTd.classList.add(`condition-${conditionClass}`);
+      condTd.textContent = item.Condition || "Unknown";
+      condTd.classList.add(`condition-${(item.Condition || "unknown").toLowerCase().replace(/\s/g, "-")}`);
 
-      // Actions cell
       const actionsTd = document.createElement("td");
       actionsTd.classList.add("actions-cell");
 
-      // Edit button
       const editBtn = document.createElement("button");
       editBtn.textContent = "✏️ Edit";
-      editBtn.style.marginRight = "5px";
-      editBtn.style.backgroundColor = "#ffc107";
-      editBtn.style.color = "#000";
-      editBtn.style.border = "none";
-      editBtn.style.padding = "5px 10px";
-      editBtn.style.borderRadius = "5px";
-      editBtn.style.cursor = "pointer";
-      editBtn.addEventListener("click", () => {
-        showEditItemForm(docSnap.id, item);
-      });
+      editBtn.addEventListener("click", () => showEditItemForm(item.id, item));
 
-      // Delete button
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "🗑 Delete";
-      deleteBtn.style.backgroundColor = "#dc3545";
-      deleteBtn.style.color = "#fff";
-      deleteBtn.style.border = "none";
-      deleteBtn.style.padding = "5px 10px";
-      deleteBtn.style.borderRadius = "5px";
-      deleteBtn.style.cursor = "pointer";
       deleteBtn.addEventListener("click", async () => {
-        if (confirm(`Are you sure you want to delete "${item.Name}"?`)) {
-          await deleteDoc(doc(db, "inventory", docSnap.id));
-          alert("Item deleted successfully!");
-          fetchInventory();
+        if (confirm(`Delete "${item.Name}"?`)) {
+          try {
+            await addDoc(collection(db, "trash"), {
+              ...item,
+              deletedAt: new Date().toISOString(),
+              originalId: item.id
+            });
+            await deleteDoc(doc(db, "inventory", item.id));
+            alert("Item moved to Trash!");
+            fetchInventory();
+          } catch (err) {
+            console.error(err);
+            alert("❌ Failed to delete item.");
+          }
         }
       });
 
-      // QR Code button
       const qrBtn = document.createElement("button");
       qrBtn.textContent = "🔗 QR";
       qrBtn.classList.add("qr-btn");
-      qrBtn.style.backgroundColor = "#007bff";
-      qrBtn.style.color = "#fff";
-      qrBtn.style.border = "none";
-      qrBtn.style.padding = "5px 10px";
-      qrBtn.style.borderRadius = "5px";
-      qrBtn.style.cursor = "pointer";
-      qrBtn.addEventListener("click", () => {
-        showQRModal(docSnap.id);
-      });
+      qrBtn.addEventListener("click", () => showQRModal(item.id));
 
-      actionsTd.appendChild(editBtn);
-      actionsTd.appendChild(deleteBtn);
-      actionsTd.appendChild(qrBtn);
+      actionsTd.append(editBtn, deleteBtn, qrBtn);
 
       tr.append(idTd, nameTd, labTd, dateTd, condTd, actionsTd);
       tbody.appendChild(tr);
 
-      rows.push({
-        row: tr,
-        name: name.toLowerCase(),
-        lab,
-        condition,
-        id: idShort.toLowerCase()
-      });
+      rows.push({ row: tr, name: (item.Name || "").toLowerCase(), lab: item.Laboratory, condition: item.Condition, id: item.id.slice(-6).toLowerCase() });
     });
 
     table.appendChild(tbody);
     root.appendChild(table);
 
-    // Filtering function applying all filters
     function applyFilters() {
       const searchTerm = searchInput.value.toLowerCase();
       const selectedLab = labFilter.value;
@@ -258,14 +221,12 @@ nameTd.appendChild(nameLink);
 
       rows.forEach(({ row, name, lab, condition, id }) => {
         const matchesSearch = name.includes(searchTerm) || id.includes(searchTerm);
-        const matchesLab = selectedLab === "" || lab === selectedLab;
-        const matchesCondition = selectedCondition === "" || condition === selectedCondition;
-
-        row.style.display = (matchesSearch && matchesLab && matchesCondition) ? "" : "none";
+        const matchesLab = !selectedLab || lab === selectedLab;
+        const matchesCondition = !selectedCondition || condition === selectedCondition;
+        row.style.display = matchesSearch && matchesLab && matchesCondition ? "" : "none";
       });
     }
 
-    // Attach filter event listeners
     searchInput.addEventListener("input", applyFilters);
     labFilter.addEventListener("change", applyFilters);
     conditionFilter.addEventListener("change", applyFilters);
@@ -276,209 +237,425 @@ nameTd.appendChild(nameLink);
   }
 }
 
-// ✅ Handle "Add Item" button click
-const addItemBtn = document.getElementById("add-item-btn");
-if (addItemBtn) {
-  addItemBtn.addEventListener("click", () => {
-    showAddItemForm();
-  });
-}
-
-// ✅ Create and show the Add Item modal
-function showAddItemForm() {
+/* -------------------------
+   Show Trash Modal
+------------------------- */
+async function showTrashModal() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
 
+  const modal = document.createElement("div");
+  modal.className = "modal modal--large";
+  modal.style.maxWidth = "95vw";
+
+  modal.innerHTML = `
+    <h2>🗑️ Trash Bin</h2>
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Laboratory</th>
+          <th>Condition</th>
+          <th>Date Added</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="trash-tbody"><tr><td colspan="5">Loading...</td></tr></tbody>
+    </table>
+    <button id="close-trash-btn">Close</button>
+  `;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  document.getElementById("close-trash-btn").addEventListener("click", () => overlay.remove());
+
+  const tbody = document.getElementById("trash-tbody");
+  try {
+    const snapshot = await getDocs(collection(db, "trash"));
+    tbody.innerHTML = "";
+
+    if (snapshot.empty) {
+      tbody.innerHTML = `<tr><td colspan="5">Trash is empty.</td></tr>`;
+      return;
+    }
+
+    snapshot.forEach(docSnap => {
+      const item = docSnap.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.Name || "Unnamed"}</td>
+        <td>${item.Laboratory || "Unknown"}</td>
+        <td>${item.Condition || "Unknown"}</td>
+        <td>${parseStoredDateToLocal(item["Date added"])}</td>
+        <td class="actions-cell"></td>
+      `;
+
+      const actionsTd = tr.querySelector(".actions-cell");
+
+      const restoreBtn = document.createElement("button");
+      restoreBtn.textContent = "♻️ Restore";
+      restoreBtn.addEventListener("click", async () => {
+        try {
+          await addDoc(collection(db, "inventory"), {
+            Name: item.Name,
+            Laboratory: item.Laboratory,
+            Condition: item.Condition,
+            "Date added": nowLocalDateTimeString()
+          });
+          await deleteDoc(doc(db, "trash", docSnap.id));
+          alert("✅ Item restored!");
+          overlay.remove();
+          fetchInventory();
+        } catch (err) {
+          console.error(err);
+          alert("❌ Failed to restore.");
+        }
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑️ Delete Permanently";
+      deleteBtn.addEventListener("click", async () => {
+        if (confirm(`Permanently delete "${item.Name}"?`)) {
+          try {
+            await deleteDoc(doc(db, "trash", docSnap.id));
+            alert("❌ Item permanently deleted!");
+            tr.remove();
+          } catch (err) {
+            console.error(err);
+            alert("❌ Failed to delete.");
+          }
+        }
+      });
+
+      actionsTd.append(restoreBtn, deleteBtn);
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("Error fetching trash:", err);
+    tbody.innerHTML = `<tr><td colspan="5">Error loading trash.</td></tr>`;
+  }
+}
+
+/* -------------------------
+   Add Item with Categories
+------------------------- */
+/* -------------------------
+   Add Item with Categories
+------------------------- */
+function showAddItemForm() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
   const modal = document.createElement("div");
   modal.className = "modal";
   modal.innerHTML = `
     <h2>Add New Inventory Item</h2>
     <form id="add-item-form">
-      <label for="item-name">Name:</label>
-      <input type="text" id="item-name" required />
+      <label>Category:</label>
+      <select id="item-category" required>
+        <option value="">Select Category</option>
+        <option value="Computers">Computers</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Appliances">Appliances</option>
+        <option value="Kitchen">Kitchen</option>
+      </select>
+      
+      <label>Name:</label>
+      <input type="text" id="item-name" placeholder="Select category first" disabled required />
 
-      <label for="item-lab">Laboratory:</label>
+      <label>Laboratory:</label>
       <select id="item-lab" required>
         <option value="">Select Laboratory</option>
-        <option value="Laboratory 1">Laboratory 1</option>
-        <option value="Laboratory 2">Laboratory 2</option>
-        <option value="Laboratory 3">Laboratory 3</option>
-        <option value="Laboratory 4">Laboratory 4</option>
+        <option>Laboratory 1</option>
+        <option>Laboratory 2</option>
+        <option>Laboratory 3</option>
+        <option>Laboratory 4</option>
       </select>
-
-      <label for="item-condition">Condition:</label>
+      
+      <label>Condition:</label>
       <select id="item-condition" required>
         <option value="">Select Condition</option>
-        <option value="Good">Good</option>
-        <option value="Deteriorating">Deteriorating</option>
-        <option value="For replacement">For replacement</option>
+        <option>Good</option>
+        <option>Deteriorating</option>
+        <option>For replacement</option>
       </select>
-
+      
       <button type="submit">➕ Add Item</button>
       <button type="button" id="close-modal-btn">Cancel</button>
     </form>
   `;
-
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  document.getElementById("close-modal-btn").addEventListener("click", () => overlay.remove());
+  const nameInput = modal.querySelector("#item-name");
+  const categorySelect = modal.querySelector("#item-category");
 
-  const form = document.getElementById("add-item-form");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // Handle category change → open sub-selection modal
+  categorySelect.addEventListener("change", () => {
+    const category = categorySelect.value;
+    nameInput.value = "";
+    delete nameInput.dataset.value;
 
-    const name = document.getElementById("item-name").value.trim();
-    const lab = document.getElementById("item-lab").value;
-    const condition = document.getElementById("item-condition").value;
-
-    if (!name || !lab || !condition) {
-      alert("Please fill out all fields.");
-      return;
+    let options = [];
+    if (category === "Computers") {
+      options = [
+        { name: "Intel PC", icon: "💻" },
+        { name: "Ryzen PC", icon: "🖥️" }
+      ];
+    }
+    if (category === "Electronics") {
+      options = [
+        { name: "Projector", icon: "📽️" },
+        { name: "Modem", icon: "🌐" },
+        { name: "Switch", icon: "🔀" }
+      ];
+    }
+    if (category === "Appliances") {
+      options = [
+        { name: "Chair", icon: "🪑" },
+        { name: "Aircon", icon: "❄️" },
+        { name: "Table", icon: "📏" }
+      ];
+    }
+    if (category === "Kitchen") {
+      options = [
+        { name: "Microwave", icon: "🍲" },
+        { name: "Coffee Maker", icon: "☕" },
+        { name: "Fridge", icon: "🧊" }
+      ];
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    if (options.length === 0) return;
+
+    // Sub modal overlay
+    const subOverlay = document.createElement("div");
+    subOverlay.className = "modal-overlay";
+
+    // Sub modal box
+    const subModal = document.createElement("div");
+    subModal.className = "modal modal--small";
+
+    // force wider modal size
+    subModal.style.width = "80%";
+    subModal.style.maxWidth = "800px";
+    subModal.style.minWidth = "600px";
+
+    subModal.innerHTML = `
+      <h3>Select ${category} Type</h3>
+      <div id="sub-options"></div>
+      <button type="button" id="sub-close">Cancel</button>
+    `;
+
+    subOverlay.appendChild(subModal);
+    document.body.appendChild(subOverlay);
+
+    // Build options table
+    const subOptions = subModal.querySelector("#sub-options");
+    subOptions.innerHTML = "";
+    const table = document.createElement("table");
+    table.className = "inventory-table";
+    const tbody = document.createElement("tbody");
+
+    for (let i = 0; i < options.length; i += 5) {
+      const row = document.createElement("tr");
+
+      options.slice(i, i + 5).forEach(opt => {
+        const cell = document.createElement("td");
+        const btn = document.createElement("button");
+btn.className = "item-choice-btn";
+btn.innerHTML = `${opt.icon} ${opt.name}`;
+
+// ✅ Inline styling for option buttons
+Object.assign(btn.style, {
+  display: "block",
+  width: "100%",
+  padding: "12px 16px",
+  fontSize: "14px",
+  fontWeight: "600",
+  color: "#fff",
+  background: "linear-gradient(135deg, #2563eb, #1d4ed8)", // blue theme
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+});
+
+btn.addEventListener("mouseover", () => {
+  btn.style.background = "linear-gradient(135deg, #1e40af, #1d4ed8)";
+  btn.style.transform = "translateY(-2px)";
+});
+btn.addEventListener("mouseout", () => {
+  btn.style.background = "linear-gradient(135deg, #2563eb, #1d4ed8)";
+  btn.style.transform = "translateY(0)";
+});
+
+btn.addEventListener("click", () => {
+  nameInput.value = opt.name;
+  nameInput.dataset.value = opt.name;
+  subOverlay.remove();
+});
+
+        cell.appendChild(btn);
+        row.appendChild(cell);
+      });
+
+      tbody.appendChild(row);
+    }
+
+    table.appendChild(tbody);
+    subOptions.appendChild(table);
+
+    // ✅ Style sub-modal cancel button
+    const subCloseBtn = subModal.querySelector("#sub-close");
+    Object.assign(subCloseBtn.style, {
+      display: "block",
+      width: "100%",
+      padding: "12px 16px",
+      marginTop: "15px",
+      fontSize: "14px",
+      fontWeight: "600",
+      color: "#fff",
+      background: "linear-gradient(135deg, #ef4444, #b91c1c)", // red theme
+      border: "none",
+      borderRadius: "8px",
+      cursor: "pointer",
+    });
+    subCloseBtn.addEventListener("mouseover", () => {
+      subCloseBtn.style.background = "linear-gradient(135deg, #dc2626, #991b1b)";
+    });
+    subCloseBtn.addEventListener("mouseout", () => {
+      subCloseBtn.style.background = "linear-gradient(135deg, #ef4444, #b91c1c)";
+    });
+
+    subCloseBtn.addEventListener("click", () => subOverlay.remove());
+  });
+
+  modal.querySelector("#close-modal-btn").addEventListener("click", () => overlay.remove());
+
+  modal.querySelector("#add-item-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = nameInput.dataset.value || "";
+    const lab = modal.querySelector("#item-lab").value;
+    const condition = modal.querySelector("#item-condition").value;
+    if (!name || !lab || !condition) return alert("Fill all fields");
 
     try {
-      const inventoryCol = collection(db, "inventory");
-      await addDoc(inventoryCol, {
+      await addDoc(collection(db, "inventory"), {
         Name: name,
         Laboratory: lab,
         Condition: condition,
-        "Date added": today
+        "Date added": nowLocalDateTimeString()
       });
-
-      alert("✅ Item added successfully!");
+      alert("✅ Item added!");
       overlay.remove();
       fetchInventory();
-    } catch (error) {
-      console.error("Error adding item:", error);
-      alert("❌ Failed to add item.");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to add.");
     }
   });
 }
 
-// ✅ Edit Item modal
-function showEditItemForm(id, item) {
+
+/* -------------------------
+   QR Modal
+------------------------- */
+function showQRModal(itemId) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
 
   const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.innerHTML = `
-    <h2>Edit Inventory Item</h2>
-    <form id="edit-item-form">
-      <label for="edit-name">Name:</label>
-      <input type="text" id="edit-name" value="${item.Name}" required />
+  modal.className = "modal modal--small";
 
-      <label for="edit-lab">Laboratory:</label>
+  modal.innerHTML = `
+    <h2>QR Code for ${itemId}</h2>
+    <canvas id="qrCanvas"></canvas>
+    <button id="close-qr">Close</button>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const qrCanvas = document.getElementById("qrCanvas");
+  const ctx = qrCanvas.getContext("2d");
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, 200, 200);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(20, 20, 160, 160);
+
+  document.getElementById("close-qr").addEventListener("click", () => overlay.remove());
+}
+
+/* -------------------------
+   Edit Item Modal
+------------------------- */
+function showEditItemForm(itemId, itemData) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const modal = document.createElement("div");
+  modal.className = "modal";
+
+  modal.innerHTML = `
+    <h2>Edit Item</h2>
+    <form id="edit-item-form">
+      <label>Name:</label>
+      <input type="text" id="edit-name" value="${itemData.Name || ""}" required />
+
+      <label>Laboratory:</label>
       <select id="edit-lab" required>
-        <option value="Laboratory 1" ${item.Laboratory === "Laboratory 1" ? "selected" : ""}>Laboratory 1</option>
-        <option value="Laboratory 2" ${item.Laboratory === "Laboratory 2" ? "selected" : ""}>Laboratory 2</option>
-        <option value="Laboratory 3" ${item.Laboratory === "Laboratory 3" ? "selected" : ""}>Laboratory 3</option>
-        <option value="Laboratory 4" ${item.Laboratory === "Laboratory 4" ? "selected" : ""}>Laboratory 4</option>
+        <option ${itemData.Laboratory === "Laboratory 1" ? "selected" : ""}>Laboratory 1</option>
+        <option ${itemData.Laboratory === "Laboratory 2" ? "selected" : ""}>Laboratory 2</option>
+        <option ${itemData.Laboratory === "Laboratory 3" ? "selected" : ""}>Laboratory 3</option>
+        <option ${itemData.Laboratory === "Laboratory 4" ? "selected" : ""}>Laboratory 4</option>
       </select>
 
-      <label for="edit-condition">Condition:</label>
+      <label>Condition:</label>
       <select id="edit-condition" required>
-        <option value="Good" ${item.Condition === "Good" ? "selected" : ""}>Good</option>
-        <option value="Deteriorating" ${item.Condition === "Deteriorating" ? "selected" : ""}>Deteriorating</option>
-        <option value="For replacement" ${item.Condition === "For replacement" ? "selected" : ""}>For replacement</option>
+        <option ${itemData.Condition === "Good" ? "selected" : ""}>Good</option>
+        <option ${itemData.Condition === "Deteriorating" ? "selected" : ""}>Deteriorating</option>
+        <option ${itemData.Condition === "For replacement" ? "selected" : ""}>For replacement</option>
       </select>
 
       <button type="submit">💾 Save Changes</button>
-      <button type="button" id="close-edit-btn">Cancel</button>
+      <button type="button" id="edit-cancel">Cancel</button>
     </form>
   `;
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  document.getElementById("close-edit-btn").addEventListener("click", () => overlay.remove());
+  modal.querySelector("#edit-cancel").addEventListener("click", () => overlay.remove());
 
-  const form = document.getElementById("edit-item-form");
-  form.addEventListener("submit", async (e) => {
+  modal.querySelector("#edit-item-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const updatedName = document.getElementById("edit-name").value.trim();
-    const updatedLab = document.getElementById("edit-lab").value;
-    const updatedCondition = document.getElementById("edit-condition").value;
+    const newName = modal.querySelector("#edit-name").value.trim();
+    const newLab = modal.querySelector("#edit-lab").value;
+    const newCondition = modal.querySelector("#edit-condition").value;
 
-    if (!updatedName || !updatedLab || !updatedCondition) {
-      alert("Please fill out all fields.");
+    if (!newName || !newLab || !newCondition) {
+      alert("❌ Please fill all fields.");
       return;
     }
 
     try {
-      const docRef = doc(db, "inventory", id);
-      await updateDoc(docRef, {
-        Name: updatedName,
-        Laboratory: updatedLab,
-        Condition: updatedCondition
+      await updateDoc(doc(db, "inventory", itemId), {
+        Name: newName,
+        Laboratory: newLab,
+        Condition: newCondition
       });
-
-      alert("✅ Item updated successfully!");
+      alert("✅ Item updated!");
       overlay.remove();
       fetchInventory();
-    } catch (error) {
-      console.error("Error updating item:", error);
+    } catch (err) {
+      console.error(err);
       alert("❌ Failed to update item.");
     }
   });
 }
 
-// ✅ Show QR modal with close button
-function showQRModal(id) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-
-  const modal = document.createElement("div");
-  modal.className = "modal";
-
-  // Generate a URL or string for the QR code, for example:
-  const url = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${id}`;
-;
-
-  // Include QRCode.js from CDN for generating QR (you can include in your HTML as well)
-  // Or generate QR code manually here using some lib
-  modal.innerHTML = `
-    <h2>QR Code for Item</h2>
-    <div id="qr-code-container" style="margin: 20px auto; width: 200px; height: 200px;"></div>
-    <button id="close-qr-btn">Close</button>
-  `;
-
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  // Generate QR code inside the container
-  generateQRCode(url, document.getElementById("qr-code-container"));
-
-  document.getElementById("close-qr-btn").addEventListener("click", () => overlay.remove());
-}
-
-// Helper function to generate QR code using QRCode.js CDN
-function generateQRCode(text, container) {
-  container.innerHTML = "";
-  const scriptId = "qr-code-lib";
-  if (!document.getElementById(scriptId)) {
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
-    script.id = scriptId;
-    script.onload = () => {
-      new QRCode(container, {
-        text: text,
-        width: 200,
-        height: 200,
-      });
-    };
-    document.body.appendChild(script);
-  } else {
-    new QRCode(container, {
-      text: text,
-      width: 200,
-      height: 200,
-    });
-  }
-}
-
-// Fetch inventory on load
+/* -------------------------
+   Event Listeners
+------------------------- */
+document.getElementById("add-item-btn")?.addEventListener("click", showAddItemForm);
+document.getElementById("trash-btn")?.addEventListener("click", showTrashModal);
 fetchInventory();

@@ -42,11 +42,24 @@
         <li id="my-tickets-link" style="display: none;">
           <a href="#" id="my-tickets-link-a">My Tickets</a>
         </li>
-
+        
         <!-- Group login button and avatar together -->
         <li class="login-avatar-group" style="display: flex; position: relative;">
           <!-- Login Button -->
           <a href="#" class="login-btn">Login</a>
+
+
+    <!-- Notification Button + Dropdown -->
+    <div id="notification-wrapper" style="display:none; position: relative;">
+      <div id="notification-btn">
+        <span class="bell-icon">🔔</span>
+        <span id="notification-count" class="notif-badge">0</span>
+      </div>
+      <div id="notification-dropdown">
+        <p class="notif-empty">No notifications</p>
+        <ul id="notification-list"></ul>
+      </div>
+    </div>
 
           <!-- User Avatar -->
           <div id="user-avatar" style="display:none;">
@@ -55,7 +68,10 @@
 
           <!-- Avatar Dropdown (single instance only) -->
           <div id="avatar-dropdown">
+            <!-- 🔹 Email shown here after login -->
             <div id="user-role" style="padding: 10px; color: yellow; font-weight: bold; border-bottom: 1px solid rgba(238, 255, 0, 0.4); display: none;"></div>
+            <!-- 🔹 New Profile button -->
+            <a href="#" id="profile-btn">Profile</a>
             <a href="#" id="logout-btn">Logout</a>
           </div>
         </li>
@@ -70,6 +86,10 @@
     <!-- Login/Register Modal -->
     <div id="login-modal">
       <h2>Login</h2>
+
+      <input type="text" id="first-name" placeholder="First Name" style="display:none;" />
+      <input type="text" id="last-name" placeholder="Last Name" style="display:none;" />
+
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
       

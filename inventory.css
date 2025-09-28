@@ -22,6 +22,7 @@ h1 {
   margin-right: auto;
 }
 
+/* Stat boxes */
 .stat-box {
   flex: 1;
   padding: 20px;
@@ -34,39 +35,28 @@ h1 {
   justify-content: space-between;
   align-items: center;
 }
-
-.stat-title {
-  font-size: 16px;
-  opacity: 0.9;
-}
-
-.stat-value {
-  font-size: 28px;
-  margin-top: 5px;
-}
-
-.stat-box-icon {
-  font-size: 36px;
-  opacity: 0.3;
-}
+.stat-title { font-size: 16px; opacity: 0.9; }
+.stat-value { font-size: 28px; margin-top: 5px; }
+.stat-box-icon { font-size: 36px; opacity: 0.3; }
 
 /* Specific colors */
-.stat-total {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
+.stat-total { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.stat-deteriorating { background: linear-gradient(135deg, #f97316, #ea580c); }
+.stat-replacement { background: linear-gradient(135deg, #10b981, #059669); }
 
-.stat-deteriorating {
-  background: linear-gradient(135deg, #f97316, #ea580c);
-}
-
-.stat-replacement {
-  background: linear-gradient(135deg, #10b981, #059669);
+/* Inventory Actions (Add + Trash buttons container) */
+.inventory-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 15px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Add Item Button */
 #add-item-btn {
-  display: block;
-  margin: 0 auto 20px auto;
   padding: 12px 24px;
   font-size: 16px;
   background-color: #2563eb;
@@ -77,12 +67,23 @@ h1 {
   transition: background-color 0.3s ease;
   user-select: none;
 }
+#add-item-btn:hover { background-color: #1d4ed8; }
 
-#add-item-btn:hover {
-  background-color: #1d4ed8;
+/* Trash Button */
+#trash-btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #6c757d;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
+#trash-btn:hover { background-color: #5a6268; transform: translateY(-1px); }
 
-/* Filter container and inputs */
+/* Filter container */
 #inventory-root > div:first-child {
   display: flex;
   gap: 10px;
@@ -91,7 +92,6 @@ h1 {
   margin-left: auto;
   margin-right: auto;
 }
-
 #search-inventory {
   flex: 1;
   padding: 8px 12px;
@@ -101,11 +101,7 @@ h1 {
   outline-offset: 2px;
   transition: border-color 0.3s ease;
 }
-
-#search-inventory:focus {
-  border-color: #2563eb;
-}
-
+#search-inventory:focus { border-color: #2563eb; }
 #filter-lab, #filter-condition {
   min-width: 150px;
   padding: 8px 10px;
@@ -115,14 +111,8 @@ h1 {
   outline-offset: 2px;
   transition: border-color 0.3s ease;
 }
-
-#filter-condition {
-  min-width: 180px;
-}
-
-#filter-lab:focus, #filter-condition:focus {
-  border-color: #2563eb;
-}
+#filter-condition { min-width: 180px; }
+#filter-lab:focus, #filter-condition:focus { border-color: #2563eb; }
 
 /* Inventory Table */
 .inventory-table {
@@ -135,88 +125,84 @@ h1 {
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
+  color: #000;
+  table-layout: auto;
 }
 
-/* Zebra striping for table rows */
-.inventory-table tbody tr:nth-child(odd) {
-  background-color: #ffffff; /* pure white */
-}
-
-.inventory-table tbody tr:nth-child(even) {
-  background-color: #f2f4f7; /* light gray */
-}
-
+/* Zebra striping */
+.inventory-table tbody tr:nth-child(odd) { background-color: #ffffff; }
+.inventory-table tbody tr:nth-child(even) { background-color: #f2f4f7; }
 
 .inventory-table thead {
   background-color: #2563eb;
   color: white;
 }
-
-.inventory-table th, .inventory-table td {
+.inventory-table th,
+.inventory-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #eee;
   font-size: 14px;
+  color: #000;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.inventory-table tbody tr:hover { background-color: #f1f5f9; }
+
+/* Center the Actions column */
+.inventory-table th:last-child,
+.inventory-table td.actions-cell,
+#trash-tbody td.actions-cell {
+  text-align: center;
 }
 
-.inventory-table tbody tr:hover {
-  background-color: #f1f5f9;
+/* Stretch Date Added column */
+.inventory-table th:nth-child(4),
+.inventory-table td:nth-child(4) {
+  min-width: 180px;
+  white-space: nowrap;
 }
 
 /* Condition colors */
-.condition-good {
-  color: #059669;
-  font-weight: 600;
-}
-
-.condition-deteriorating {
-  color: #ea580c;
-  font-weight: 600;
-}
-
-.condition-for-replacement {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.condition-unknown {
-  color: #000 !important;
-  font-weight: 600;
-}
-
+.condition-good { color: #059669 !important; font-weight: 600; }
+.condition-deteriorating { color: #ea580c !important; font-weight: 600; }
+.condition-for-replacement { color: #dc2626 !important; font-weight: 600; }
+.condition-unknown { color: #000 !important; font-weight: 600; }
 
 /* Actions cell */
 .actions-cell {
   white-space: nowrap;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Action Buttons */
 .actions-cell button {
-  padding: 5px 10px;
+  padding: 6px 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 13px;
   user-select: none;
   transition: background-color 0.3s ease;
+  display: inline-block;
+  white-space: nowrap;
 }
+.actions-cell button:hover { filter: brightness(0.9); }
+.actions-cell button:nth-child(1) { background-color: #ffc107; color: #000; }
+.actions-cell button:nth-child(2) { background-color: #dc3545; color: white; }
 
-.actions-cell button:hover {
-  filter: brightness(0.9);
-}
-
-/* Edit button style */
-.actions-cell button:nth-child(1) {
-  background-color: #ffc107;
-  color: #000;
-  margin-right: 5px;
-}
-
-/* Delete button style */
-.actions-cell button:nth-child(2) {
-  background-color: #dc3545;
+/* QR button */
+.actions-cell button.qr-btn {
+  background-color: #17a2b8;
   color: white;
+  padding: 5px 8px;
+  font-size: 0.9em;
 }
+.actions-cell button.qr-btn:hover { background-color: #138496; }
 
 /* Modal overlay */
 .modal-overlay {
@@ -230,6 +216,7 @@ h1 {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  overflow: auto;
 }
 
 /* Modal box */
@@ -237,13 +224,14 @@ h1 {
   background-color: white;
   padding: 25px 30px;
   border-radius: 12px;
-  width: 320px;
-  max-width: 90vw;
+  width: 95%;
+  max-width: 1200px;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
   animation: fadeInModal 0.3s ease forwards;
+  color: #000;
+  text-align: left;
+  overflow-x: auto;
 }
-
-/* Modal header */
 .modal h2 {
   margin-top: 0;
   margin-bottom: 20px;
@@ -252,19 +240,28 @@ h1 {
   text-align: center;
 }
 
+/* Small modal variant for Add/Edit forms */
+.modal.modal--small {
+  max-width: 800px;
+  width: 80%;
+  padding: 25px 30px;
+}
+
+
+/* Large modal variant for Trash */
+.modal.modal--large {
+  width: 65vw;
+  max-width: 1000px;
+  height: auto;
+  max-height: 95vh;
+  padding: 25px 30px;
+}
+
 /* Modal form */
-.modal form {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.modal form { display: flex; flex-direction: column; gap: 6px; }
+.modal label { font-weight: 600; font-size: 14px; color: #333; }
 
-.modal label {
-  font-weight: 600;
-  font-size: 14px;
-  color: #333;
-}
-
+/* Inputs */
 .modal input[type="text"],
 .modal select {
   padding: 8px 10px;
@@ -273,12 +270,10 @@ h1 {
   border-radius: 6px;
   outline-offset: 2px;
   transition: border-color 0.3s ease;
+  color: #000;
 }
-
 .modal input[type="text"]:focus,
-.modal select:focus {
-  border-color: #2563eb;
-}
+.modal select:focus { border-color: #2563eb; }
 
 /* Modal buttons */
 .modal button[type="submit"] {
@@ -291,119 +286,242 @@ h1 {
   cursor: pointer;
   font-weight: 700;
   font-size: 16px;
-  user-select: none;
-  transition: background-color 0.3s ease;
 }
+.modal button[type="submit"]:hover { background-color: #1d4ed8; }
 
-.modal button[type="submit"]:hover {
-  background-color: #1d4ed8;
-}
-
-.modal button[type="button"] {
-  margin-top: 8px;
+.modal button[type="button"],
+.modal button#close-trash-btn,
+.modal button#close-qr-btn,
+.modal button#close-edit-btn,
+.modal button#close-modal-btn {
+  margin-top: 10px;
   background-color: #6b7280;
-  color: white;
-  border: none;
-  padding: 8px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  user-select: none;
-  transition: background-color 0.3s ease;
-}
-
-.modal button[type="button"]:hover {
-  background-color: #4b5563;
-}
-
-/* Animations */
-@keyframes fadeInModal {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .modal {
-    width: 90vw;
-  }
-
-  #stats-container {
-    flex-direction: column;
-  }
-
-  .stat-box {
-    justify-content: space-between;
-  }
-}
-
-/* Add styles for the QR Code modal overlay and content */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal {
-  background: white;
-  padding: 20px 30px;
-  border-radius: 10px;
-  max-width: 320px;
-  width: 100%;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  text-align: center;
-  position: relative;
-}
-
-.modal h2 {
-  margin-bottom: 15px;
-  color: #000;
-}
-
-.modal button.close-qr-btn {
-  background-color: #dc3545;
   color: white;
   border: none;
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+.modal button:hover {
+  background-color: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Trash modal action buttons */
+#trash-tbody button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+#trash-tbody button:hover { filter: brightness(0.9); }
+
+/* ✅ Ensure table inside modal displays correctly */
+.modal table.inventory-table {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 15px auto;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.modal table.inventory-table th,
+.modal table.inventory-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #000;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+/* Keep Actions column neat */
+.modal table.inventory-table th:last-child,
+.modal table.inventory-table td.actions-cell {
+  text-align: center;
+  white-space: nowrap !important;
+}
+
+/* Animations */
+@keyframes fadeInModal {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Center align action buttons in Trash modal */
+#trash-tbody td.actions-cell {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px;
+}
+
+/* Date Added column: fit datetime */
+.inventory-table th:nth-child(4),
+.inventory-table td:nth-child(4),
+.modal table.inventory-table th:nth-child(4),
+.modal table.inventory-table td:nth-child(4) {
+  min-width: 160px;
+  max-width: 180px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 🔒 Trash modal column sizing */
+.modal.modal--large table.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto !important; /* allow content-based widths */
+}
+
+.modal.modal--large table.inventory-table th,
+.modal.modal--large table.inventory-table td {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+/* Column widths tuned for Trash modal */
+.modal.modal--large table.inventory-table th:nth-child(1),
+.modal.modal--large table.inventory-table td:nth-child(1) {
+  width: 22%; /* Name */
+}
+
+.modal.modal--large table.inventory-table th:nth-child(2),
+.modal.modal--large table.inventory-table td:nth-child(2) {
+  width: 15%; /* Laboratory */
+  text-align: center;
+}
+
+.modal.modal--large table.inventory-table th:nth-child(3),
+.modal.modal--large table.inventory-table td:nth-child(3) {
+  width: 15%; /* Condition */
+  text-align: center;
+}
+
+.modal.modal--large table.inventory-table th:nth-child(4),
+.modal.modal--large table.inventory-table td:nth-child(4) {
+  width: 20%; /* Date Added */
+  text-align: center;
+  white-space: nowrap;
+}
+
+.modal.modal--large table.inventory-table th:nth-child(5),
+.modal.modal--large table.inventory-table td:nth-child(5) {
+  width: auto !important; /* let content fit naturally */
+  text-align: center !important;
+}
+
+/* Sub modal grid */
+.sub-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
   margin-top: 15px;
 }
 
-.actions-cell button.qr-btn {
-  background-color: #17a2b8;
+/* Option cards */
+.option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-card:hover {
+  border-color: #007bff;
+  background: #eef6ff;
+  transform: scale(1.05);
+}
+
+.option-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.option-name {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+/* Buttons inside Add Item sub-modal table */
+.item-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px 14px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  background: #2563eb;
   color: white;
   border: none;
-  padding: 5px 8px;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-left: 5px;
-  font-size: 0.9em;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* You can also add hover effect */
-.actions-cell button.qr-btn:hover {
-  background-color: #138496;
+.item-choice-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
-/* color (ID, Name, Laboratory, Date Added) */
-.inventory-table tbody td:nth-child(1), /* ID */
-.inventory-table tbody td:nth-child(2), /* Name */
-.inventory-table tbody td:nth-child(3), /* Laboratory */
-.inventory-table tbody td:nth-child(4)  /* Date Added */ {
-  color: #000 !important;
+.modal.modal--small table.inventory-table td {
+  text-align: center;
+  padding: 12px;
+}
+
+.item-choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.item-choice-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* 🔥 Force sub modal to be wide */
+.modal.modal--small {
+  width: 80% !important;
+  max-width: 800px !important;
+  min-width: 600px !important;
+  padding: 25px 30px !important;
+}
+
+/* Make table look good inside */
+.modal.modal--small table.inventory-table {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+.modal.modal--small table.inventory-table td {
+  text-align: center;
+  padding: 12px;
 }

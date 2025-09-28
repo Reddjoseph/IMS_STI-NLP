@@ -356,3 +356,24 @@ function waitForElement(selector, timeout = 2500) {
     console.error("tickets-content init error:", err);
   }
 })();
+
+// ✅ FAQ collapsible toggle
+document.querySelectorAll(".faq-question").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const item = btn.closest(".faq-item");
+    const answer = item.querySelector(".faq-answer");
+    const icon = btn.querySelector(".faq-icon");
+
+    // Toggle visibility
+    answer.classList.toggle("open");
+
+    // Update icon
+    if (answer.classList.contains("open")) {
+      icon.textContent = "−";
+      answer.style.maxHeight = answer.scrollHeight + "px";
+    } else {
+      icon.textContent = "+";
+      answer.style.maxHeight = null;
+    }
+  });
+});

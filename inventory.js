@@ -102,11 +102,9 @@ async function fetchInventory() {
     const labFilter = document.createElement("select");
     labFilter.id = "filter-lab";
     labFilter.innerHTML = `
-      <option value="">All Laboratories</option>
-      <option value="Laboratory 1">Laboratory 1</option>
-      <option value="Laboratory 2">Laboratory 2</option>
-      <option value="Laboratory 3">Laboratory 3</option>
-      <option value="Laboratory 4">Laboratory 4</option>
+      <option value="">All Locations</option>
+      <option value="Main Building">Main Building</option>
+      <option value="Annex">Annex</option>
     `;
     filterContainer.appendChild(labFilter);
 
@@ -115,8 +113,9 @@ async function fetchInventory() {
     conditionFilter.innerHTML = `
       <option value="">All Conditions</option>
       <option value="Good">Good</option>
-      <option value="Deteriorating">Deteriorating</option>
-      <option value="For replacement">For replacement</option>
+      <option value="Damaged">Damaged</option>
+      <option value="For Maintenance">For Maintenance</option>
+      <option value="For Replacement">For Replacement</option>
     `;
     filterContainer.appendChild(conditionFilter);
 
@@ -127,7 +126,7 @@ async function fetchInventory() {
 
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["ID", "Name", "Laboratory", "Date Added", "Condition", "Actions"].forEach(text => {
+    ["ID", "Name", "Location", "Date Added", "Condition", "Actions"].forEach(text => {
       const th = document.createElement("th");
       th.textContent = text;
       headRow.appendChild(th);
@@ -162,7 +161,7 @@ async function fetchInventory() {
       nameTd.appendChild(nameLink);
 
       const labTd = document.createElement("td");
-      labTd.textContent = item.Laboratory || "Unknown";
+      labTd.textContent = item.Laboratory || "Unknown"; // Displayed as Location
 
       const dateTd = document.createElement("td");
       dateTd.textContent = parseStoredDateToLocal(item["Date added"]);
@@ -221,7 +220,7 @@ async function fetchInventory() {
 
       rows.forEach(({ row, name, lab, condition, id }) => {
         const matchesSearch = name.includes(searchTerm) || id.includes(searchTerm);
-        const matchesLab = !selectedLab || lab === selectedLab;
+        const matchesLab = !selectedLab || lab.includes(selectedLab);
         const matchesCondition = !selectedCondition || condition === selectedCondition;
         row.style.display = matchesSearch && matchesLab && matchesCondition ? "" : "none";
       });
@@ -254,7 +253,7 @@ async function showTrashModal() {
       <thead>
         <tr>
           <th>Name</th>
-          <th>Laboratory</th>
+          <th>Location</th>
           <th>Condition</th>
           <th>Date Added</th>
           <th>Actions</th>
@@ -338,20 +337,19 @@ async function showTrashModal() {
 }
 
 /* -------------------------
-   Add Item with Categories
-------------------------- */
-/* -------------------------
-   Add Item with Categories
+   Add Item with Categories + Building/Location Selection
 ------------------------- */
 function showAddItemForm() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
+
   const modal = document.createElement("div");
   modal.className = "modal";
   modal.innerHTML = `
     <h2>Add New Inventory Item</h2>
     <form id="add-item-form">
-      <label>Category:</label>
+      <label>Name:</label>
+      <input type="text" id="item-name" placeholder="Select category first" disabled required />
       <select id="item-category" required>
         <option value="">Select Category</option>
         <option value="Computers">Computers</option>
@@ -359,27 +357,24 @@ function showAddItemForm() {
         <option value="Appliances">Appliances</option>
         <option value="Kitchen">Kitchen</option>
       </select>
-      
-      <label>Name:</label>
-      <input type="text" id="item-name" placeholder="Select category first" disabled required />
 
-      <label>Laboratory:</label>
-      <select id="item-lab" required>
-        <option value="">Select Laboratory</option>
-        <option>Laboratory 1</option>
-        <option>Laboratory 2</option>
-        <option>Laboratory 3</option>
-        <option>Laboratory 4</option>
+      <label>Location:</label>
+      <input type="text" id="item-lab" placeholder="Select building first" disabled required />
+      <select id="building-select" required>
+        <option value="">Select Building</option>
+        <option value="Main Building">Main Building</option>
+        <option value="Annex">Annex</option>
       </select>
-      
+
       <label>Condition:</label>
       <select id="item-condition" required>
         <option value="">Select Condition</option>
         <option>Good</option>
-        <option>Deteriorating</option>
-        <option>For replacement</option>
+        <option>Damaged</option>
+        <option>For Maintenance</option>
+        <option>For Replacement</option>
       </select>
-      
+
       <button type="submit">➕ Add Item</button>
       <button type="button" id="close-modal-btn">Cancel</button>
     </form>
@@ -388,9 +383,11 @@ function showAddItemForm() {
   document.body.appendChild(overlay);
 
   const nameInput = modal.querySelector("#item-name");
+  const labInput = modal.querySelector("#item-lab");
   const categorySelect = modal.querySelector("#item-category");
+  const buildingSelect = modal.querySelector("#building-select");
 
-  // Handle category change → open sub-selection modal
+  /* --- Category → Item selection --- */
   categorySelect.addEventListener("change", () => {
     const category = categorySelect.value;
     nameInput.value = "";
@@ -427,21 +424,17 @@ function showAddItemForm() {
 
     if (options.length === 0) return;
 
-    // Sub modal overlay
     const subOverlay = document.createElement("div");
     subOverlay.className = "modal-overlay";
 
-    // Sub modal box
     const subModal = document.createElement("div");
     subModal.className = "modal modal--small";
-
-    // force wider modal size
     subModal.style.width = "80%";
     subModal.style.maxWidth = "800px";
     subModal.style.minWidth = "600px";
 
     subModal.innerHTML = `
-      <h3>Select ${category} Type</h3>
+      <h3>Select ${category} Item</h3>
       <div id="sub-options"></div>
       <button type="button" id="sub-close">Cancel</button>
     `;
@@ -449,7 +442,6 @@ function showAddItemForm() {
     subOverlay.appendChild(subModal);
     document.body.appendChild(subOverlay);
 
-    // Build options table
     const subOptions = subModal.querySelector("#sub-options");
     subOptions.innerHTML = "";
     const table = document.createElement("table");
@@ -458,76 +450,92 @@ function showAddItemForm() {
 
     for (let i = 0; i < options.length; i += 5) {
       const row = document.createElement("tr");
-
       options.slice(i, i + 5).forEach(opt => {
         const cell = document.createElement("td");
         const btn = document.createElement("button");
-btn.className = "item-choice-btn";
-btn.innerHTML = `${opt.icon} ${opt.name}`;
-
-// ✅ Inline styling for option buttons
-Object.assign(btn.style, {
-  display: "block",
-  width: "100%",
-  padding: "12px 16px",
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#fff",
-  background: "linear-gradient(135deg, #2563eb, #1d4ed8)", // blue theme
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-});
-
-btn.addEventListener("mouseover", () => {
-  btn.style.background = "linear-gradient(135deg, #1e40af, #1d4ed8)";
-  btn.style.transform = "translateY(-2px)";
-});
-btn.addEventListener("mouseout", () => {
-  btn.style.background = "linear-gradient(135deg, #2563eb, #1d4ed8)";
-  btn.style.transform = "translateY(0)";
-});
-
-btn.addEventListener("click", () => {
-  nameInput.value = opt.name;
-  nameInput.dataset.value = opt.name;
-  subOverlay.remove();
-});
-
+        btn.className = "item-choice-btn";
+        btn.innerHTML = `${opt.icon} ${opt.name}`;
+        btn.addEventListener("click", () => {
+          nameInput.value = opt.name;
+          nameInput.dataset.value = opt.name;
+          subOverlay.remove();
+        });
         cell.appendChild(btn);
         row.appendChild(cell);
       });
-
       tbody.appendChild(row);
     }
 
     table.appendChild(tbody);
     subOptions.appendChild(table);
 
-    // ✅ Style sub-modal cancel button
-    const subCloseBtn = subModal.querySelector("#sub-close");
-    Object.assign(subCloseBtn.style, {
-      display: "block",
-      width: "100%",
-      padding: "12px 16px",
-      marginTop: "15px",
-      fontSize: "14px",
-      fontWeight: "600",
-      color: "#fff",
-      background: "linear-gradient(135deg, #ef4444, #b91c1c)", // red theme
-      border: "none",
-      borderRadius: "8px",
-      cursor: "pointer",
-    });
-    subCloseBtn.addEventListener("mouseover", () => {
-      subCloseBtn.style.background = "linear-gradient(135deg, #dc2626, #991b1b)";
-    });
-    subCloseBtn.addEventListener("mouseout", () => {
-      subCloseBtn.style.background = "linear-gradient(135deg, #ef4444, #b91c1c)";
-    });
+    subModal.querySelector("#sub-close").addEventListener("click", () => subOverlay.remove());
+  });
 
-    subCloseBtn.addEventListener("click", () => subOverlay.remove());
+  /* --- Building → Location selection --- */
+  buildingSelect.addEventListener("change", () => {
+    const building = buildingSelect.value;
+    labInput.value = "";
+    delete labInput.dataset.value;
+
+    if (!building) return;
+
+    let options = [];
+    if (building === "Main Building") {
+      options = [
+        "Laboratory 1", "Laboratory 2", "Laboratory 3", "Laboratory 4",
+        "Room 201", "Room 202", "Room 203", "Room 204",
+        "Room 401", "Room 402", "Room 403"
+      ];
+    } else if (building === "Annex") {
+      options = ["Room 201", "Room 202", "Room 203", "Room 204", "Auditorium"];
+    }
+
+    const subOverlay = document.createElement("div");
+    subOverlay.className = "modal-overlay";
+
+    const subModal = document.createElement("div");
+    subModal.className = "modal modal--small";
+    subModal.style.width = "80%";
+    subModal.style.maxWidth = "600px";
+
+    subModal.innerHTML = `
+      <h3>Select ${building} Location</h3>
+      <div id="lab-options"></div>
+      <button type="button" id="sub-close-lab">Cancel</button>
+    `;
+
+    subOverlay.appendChild(subModal);
+    document.body.appendChild(subOverlay);
+
+    const labOptions = subModal.querySelector("#lab-options");
+    labOptions.innerHTML = "";
+    const table = document.createElement("table");
+    table.className = "inventory-table";
+    const tbody = document.createElement("tbody");
+
+    for (let i = 0; i < options.length; i += 3) {
+      const row = document.createElement("tr");
+      options.slice(i, i + 3).forEach(opt => {
+        const cell = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.className = "item-choice-btn";
+        btn.textContent = opt;
+        btn.addEventListener("click", () => {
+          labInput.value = `${building} (${opt})`;
+          labInput.dataset.value = `${building} (${opt})`;
+          subOverlay.remove();
+        });
+        cell.appendChild(btn);
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    }
+
+    table.appendChild(tbody);
+    labOptions.appendChild(table);
+
+    subModal.querySelector("#sub-close-lab").addEventListener("click", () => subOverlay.remove());
   });
 
   modal.querySelector("#close-modal-btn").addEventListener("click", () => overlay.remove());
@@ -535,14 +543,14 @@ btn.addEventListener("click", () => {
   modal.querySelector("#add-item-form").addEventListener("submit", async e => {
     e.preventDefault();
     const name = nameInput.dataset.value || "";
-    const lab = modal.querySelector("#item-lab").value;
+    const lab = labInput.dataset.value || "";
     const condition = modal.querySelector("#item-condition").value;
     if (!name || !lab || !condition) return alert("Fill all fields");
 
     try {
       await addDoc(collection(db, "inventory"), {
         Name: name,
-        Laboratory: lab,
+        Laboratory: lab, // stored as Laboratory in Firestore
         Condition: condition,
         "Date added": nowLocalDateTimeString()
       });
@@ -556,7 +564,6 @@ btn.addEventListener("click", () => {
   });
 }
 
-
 /* -------------------------
    QR Modal
 ------------------------- */
@@ -569,21 +576,38 @@ function showQRModal(itemId) {
 
   modal.innerHTML = `
     <h2>QR Code for ${itemId}</h2>
-    <canvas id="qrCanvas"></canvas>
-    <button id="close-qr">Close</button>
+    <div id="qrCodeContainer" style="display:flex; justify-content:center; margin:20px 0;"></div>
+    <div style="text-align:center;">
+      <button id="close-qr-btn" class="cancel-btn">Close</button>
+    </div>
   `;
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  const qrCanvas = document.getElementById("qrCanvas");
-  const ctx = qrCanvas.getContext("2d");
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, 200, 200);
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(20, 20, 160, 160);
+  function generate() {
+    const qrContainer = document.getElementById("qrCodeContainer");
+    qrContainer.innerHTML = "";
+    new QRCode(qrContainer, {
+      text: `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${itemId}`,
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
 
-  document.getElementById("close-qr").addEventListener("click", () => overlay.remove());
+  if (typeof QRCode === "undefined") {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js";
+    script.onload = generate;
+    document.body.appendChild(script);
+  } else {
+    generate();
+  }
+
+  modal.querySelector("#close-qr-btn").addEventListener("click", () => overlay.remove());
 }
 
 /* -------------------------
@@ -601,19 +625,15 @@ function showEditItemForm(itemId, itemData) {
       <label>Name:</label>
       <input type="text" id="edit-name" value="${itemData.Name || ""}" required />
 
-      <label>Laboratory:</label>
-      <select id="edit-lab" required>
-        <option ${itemData.Laboratory === "Laboratory 1" ? "selected" : ""}>Laboratory 1</option>
-        <option ${itemData.Laboratory === "Laboratory 2" ? "selected" : ""}>Laboratory 2</option>
-        <option ${itemData.Laboratory === "Laboratory 3" ? "selected" : ""}>Laboratory 3</option>
-        <option ${itemData.Laboratory === "Laboratory 4" ? "selected" : ""}>Laboratory 4</option>
-      </select>
+      <label>Location:</label>
+      <input type="text" id="edit-lab" value="${itemData.Laboratory || ""}" required />
 
       <label>Condition:</label>
       <select id="edit-condition" required>
-        <option ${itemData.Condition === "Good" ? "selected" : ""}>Good</option>
-        <option ${itemData.Condition === "Deteriorating" ? "selected" : ""}>Deteriorating</option>
-        <option ${itemData.Condition === "For replacement" ? "selected" : ""}>For replacement</option>
+        <option ${itemData.Condition==="Good"?"selected":""}>Good</option>
+        <option ${itemData.Condition==="Damaged"?"selected":""}>Damaged</option>
+        <option ${itemData.Condition==="For Maintenance"?"selected":""}>For Maintenance</option>
+        <option ${itemData.Condition==="For Replacement"?"selected":""}>For Replacement</option>
       </select>
 
       <button type="submit">💾 Save Changes</button>

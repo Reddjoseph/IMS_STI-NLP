@@ -525,3 +525,24 @@ h1 {
   text-align: center;
   padding: 12px;
 }
+
+/* Inventory condition colors */
+.condition-good {
+  color: #16a34a !important;   /* green */
+  font-weight: bold;
+}
+
+.condition-damaged {
+  color: #dc2626 !important;   /* red */
+  font-weight: bold;
+}
+
+.condition-for-maintenance {
+  color: #eab308 !important;   /* yellow/amber */
+  font-weight: bold;
+}
+
+.condition-for-replacement {
+  color: #9333ea !important;   /* purple */
+  font-weight: bold;
+}

@@ -54,190 +54,234 @@ function parseStoredDateToLocal(dateStr) {
    Fetch Inventory
 ------------------------- */
 async function fetchInventory() {
-  const root = document.getElementById("inventory-root");
-  root.innerHTML = "";
+  const tbody = document.getElementById("inventory-root");
+  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`; // placeholder
 
-  const totalCountElem = document.getElementById("total-items-count");
-  const deterioratingCountElem = document.getElementById("deteriorating-items-count");
-  const replacementCountElem = document.getElementById("replacement-items-count");
+  // ✅ Stat counter elements
+  const totalCountElem = document.getElementById("stat-total");
+  const newCountElem = document.getElementById("stat-new");
+  const goodCountElem = document.getElementById("stat-good");
+  const maintenanceCountElem = document.getElementById("stat-maintenance");
+  const replacementCountElem = document.getElementById("stat-replacement");
 
-  if (totalCountElem) totalCountElem.textContent = "0";
-  if (deterioratingCountElem) deterioratingCountElem.textContent = "0";
-  if (replacementCountElem) replacementCountElem.textContent = "0";
+  // Reset counters
+  [totalCountElem, newCountElem, goodCountElem, maintenanceCountElem, replacementCountElem]
+    .forEach(el => el && (el.textContent = "0"));
 
   try {
-    const inventoryCol = collection(db, "inventory");
-    const snapshot = await getDocs(inventoryCol);
+    const snapshot = await getDocs(collection(db, "inventory"));
 
     if (snapshot.empty) {
-      root.textContent = "No inventory items found.";
+      tbody.innerHTML = `<tr><td colspan="6">No inventory items found.</td></tr>`;
       return;
     }
 
-    const allItems = [];
-    snapshot.forEach(docSnap => {
-      allItems.push({ id: docSnap.id, ...docSnap.data() });
-    });
+    const allItems = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
+    // ✅ Update stats
     const totalItems = allItems.length;
-    const deterioratingItems = allItems.filter(item => item.Condition === "Deteriorating").length;
-    const forReplacementItems = allItems.filter(item => item.Condition === "For replacement").length;
+    const newItems = allItems.filter(i => i.Condition === "New").length;
+    const goodItems = allItems.filter(i => i.Condition === "Good").length;
+    const maintenanceItems = allItems.filter(i => i.Condition === "For Maintenance").length;
+    const replacementItems = allItems.filter(i => i.Condition === "For Replacement").length;
 
     if (totalCountElem) totalCountElem.textContent = totalItems;
-    if (deterioratingCountElem) deterioratingCountElem.textContent = deterioratingItems;
-    if (replacementCountElem) replacementCountElem.textContent = forReplacementItems;
+    if (newCountElem) newCountElem.textContent = newItems;
+    if (goodCountElem) goodCountElem.textContent = goodItems;
+    if (maintenanceCountElem) maintenanceCountElem.textContent = maintenanceItems;
+    if (replacementCountElem) replacementCountElem.textContent = replacementItems;
 
-    const filterContainer = document.createElement("div");
-    filterContainer.style.display = "flex";
-    filterContainer.style.gap = "10px";
-    filterContainer.style.marginBottom = "10px";
+    updateChart(newItems, goodItems, maintenanceItems, replacementItems);
 
-    const searchInput = document.createElement("input");
-    searchInput.type = "search";
-    searchInput.placeholder = "Search Item...";
-    searchInput.id = "search-inventory";
-    searchInput.style.flex = "1";
-    filterContainer.appendChild(searchInput);
-
-    const labFilter = document.createElement("select");
-    labFilter.id = "filter-lab";
-    labFilter.innerHTML = `
-      <option value="">All Locations</option>
-      <option value="Main Building">Main Building</option>
-      <option value="Annex">Annex</option>
-    `;
-    filterContainer.appendChild(labFilter);
-
-    const conditionFilter = document.createElement("select");
-    conditionFilter.id = "filter-condition";
-    conditionFilter.innerHTML = `
-      <option value="">All Conditions</option>
-      <option value="Good">Good</option>
-      <option value="Damaged">Damaged</option>
-      <option value="For Maintenance">For Maintenance</option>
-      <option value="For Replacement">For Replacement</option>
-    `;
-    filterContainer.appendChild(conditionFilter);
-
-    root.appendChild(filterContainer);
-
-    const table = document.createElement("table");
-    table.className = "inventory-table";
-
-    const thead = document.createElement("thead");
-    const headRow = document.createElement("tr");
-    ["ID", "Name", "Location", "Date Added", "Condition", "Actions"].forEach(text => {
-      const th = document.createElement("th");
-      th.textContent = text;
-      headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
-    const rows = [];
-
+    // ✅ Location chart
+    const locationCounts = {};
     allItems.forEach(item => {
-      const tr = document.createElement("tr");
-
-      const idTd = document.createElement("td");
-      idTd.textContent = item.id.slice(-6);
-
-      const nameTd = document.createElement("td");
-      const nameLink = document.createElement("a");
-      nameLink.href = `https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${item.id}`;
-      nameLink.textContent = item.Name || "Unnamed";
-      nameLink.style.color = "#000";
-      nameLink.style.textDecoration = "none";
-      nameLink.target = "_blank";
-      nameLink.addEventListener("mouseover", () => {
-        nameLink.style.color = "#2563eb";
-        nameLink.style.fontWeight = "bold";
-      });
-      nameLink.addEventListener("mouseout", () => {
-        nameLink.style.color = "#000";
-        nameLink.style.fontWeight = "normal";
-      });
-      nameTd.appendChild(nameLink);
-
-      const labTd = document.createElement("td");
-      labTd.textContent = item.Laboratory || "Unknown"; // Displayed as Location
-
-      const dateTd = document.createElement("td");
-      dateTd.textContent = parseStoredDateToLocal(item["Date added"]);
-
-      const condTd = document.createElement("td");
-      condTd.textContent = item.Condition || "Unknown";
-      condTd.classList.add(`condition-${(item.Condition || "unknown").toLowerCase().replace(/\s/g, "-")}`);
-
-      const actionsTd = document.createElement("td");
-      actionsTd.classList.add("actions-cell");
-
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "✏️ Edit";
-      editBtn.addEventListener("click", () => showEditItemForm(item.id, item));
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "🗑 Delete";
-      deleteBtn.addEventListener("click", async () => {
-        if (confirm(`Delete "${item.Name}"?`)) {
-          try {
-            await addDoc(collection(db, "trash"), {
-              ...item,
-              deletedAt: new Date().toISOString(),
-              originalId: item.id
-            });
-            await deleteDoc(doc(db, "inventory", item.id));
-            alert("Item moved to Trash!");
-            fetchInventory();
-          } catch (err) {
-            console.error(err);
-            alert("❌ Failed to delete item.");
-          }
-        }
-      });
-
-      const qrBtn = document.createElement("button");
-      qrBtn.textContent = "🔗 QR";
-      qrBtn.classList.add("qr-btn");
-      qrBtn.addEventListener("click", () => showQRModal(item.id));
-
-      actionsTd.append(editBtn, deleteBtn, qrBtn);
-
-      tr.append(idTd, nameTd, labTd, dateTd, condTd, actionsTd);
-      tbody.appendChild(tr);
-
-      rows.push({ row: tr, name: (item.Name || "").toLowerCase(), lab: item.Laboratory, condition: item.Condition, id: item.id.slice(-6).toLowerCase() });
+      const loc = item.Laboratory || "Unknown";
+      locationCounts[loc] = (locationCounts[loc] || 0) + 1;
     });
+    updateLocationChart(locationCounts);
 
-    table.appendChild(tbody);
-    root.appendChild(table);
-
-    function applyFilters() {
-      const searchTerm = searchInput.value.toLowerCase();
-      const selectedLab = labFilter.value;
-      const selectedCondition = conditionFilter.value;
-
-      rows.forEach(({ row, name, lab, condition, id }) => {
-        const matchesSearch = name.includes(searchTerm) || id.includes(searchTerm);
-        const matchesLab = !selectedLab || lab.includes(selectedLab);
-        const matchesCondition = !selectedCondition || condition === selectedCondition;
-        row.style.display = matchesSearch && matchesLab && matchesCondition ? "" : "none";
-      });
+    // ✅ Latest items
+    const latestList = document.getElementById("latest-items-list");
+    if (latestList) {
+      latestList.innerHTML = "";
+      [...allItems]
+        .sort((a, b) => new Date(b["Date added"]) - new Date(a["Date added"]))
+        .slice(0, 10)
+        .forEach(item => {
+          const li = document.createElement("li");
+          li.innerHTML = `<time>${parseStoredDateToLocal(item["Date added"])}</time> ${item.Name || "Unnamed"}`;
+          latestList.appendChild(li);
+        });
     }
 
-    searchInput.addEventListener("input", applyFilters);
-    labFilter.addEventListener("change", applyFilters);
-    conditionFilter.addEventListener("change", applyFilters);
+    // ✅ Clear tbody and render rows
+    tbody.innerHTML = "";
+    allItems.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.id.slice(-6)}</td>
+        <td><a href="https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${item.id}" 
+               target="_blank" style="color:#000;text-decoration:none;">
+              ${item.Name || "Unnamed"}</a></td>
+        <td>${item.Laboratory || "Unknown"}</td>
+        <td>${parseStoredDateToLocal(item["Date added"])}</td>
+        <td><span class="condition-badge condition-${(item.Condition || "unknown").toLowerCase().replace(/\s/g,"-")}">
+              ${item.Condition || "Unknown"}</span></td>
+        <td class="actions-cell">
+          <button class="edit-btn">✏️ Edit</button>
+          <button class="delete-btn">🗑 Delete</button>
+          <button class="qr-btn">🔗 QR</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      // Wire up buttons
+      tr.querySelector(".edit-btn").addEventListener("click", () => showEditItemForm(item.id, item));
+      tr.querySelector(".delete-btn").addEventListener("click", async () => {
+        if (confirm(`Delete "${item.Name}"?`)) {
+          await addDoc(collection(db, "trash"), {
+            ...item,
+            deletedAt: new Date().toISOString(),
+            originalId: item.id
+          });
+          await deleteDoc(doc(db, "inventory", item.id));
+          fetchInventory();
+        }
+      });
+      tr.querySelector(".qr-btn").addEventListener("click", () => showQRModal(item.id));
+    });
 
   } catch (err) {
     console.error("Error fetching inventory:", err);
-    root.textContent = "Error loading inventory.";
+    tbody.innerHTML = `<tr><td colspan="6">Error loading inventory.</td></tr>`;
   }
 }
 
+
 /* -------------------------
-   Show Trash Modal
+   Items Chart
+------------------------- */
+let inventoryChart = null;
+function updateChart(newItems, goodItems, maintenanceItems, replacementItems) {
+  const ctx = document.getElementById("inventory-pie")?.getContext("2d");
+  if (!ctx || typeof Chart === "undefined") return;
+
+  if (inventoryChart) inventoryChart.destroy();
+
+  inventoryChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["New", "Good", "For Maintenance", "For Replacement"],
+      datasets: [
+        {
+          data: [newItems, goodItems, maintenanceItems, replacementItems],
+          backgroundColor: [
+            "#10b981",
+            "#3b82f6", 
+            "#facc15", 
+            "#ef4444"  
+          ],
+          borderColor: "#fff",
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            pointStyle: "rect",
+            usePointStyle: true,
+            padding: 15,
+            font: {
+              family: "Arial, sans-serif",
+              size: 14,
+              weight: "0",
+            },
+            color: "#333",
+          },
+        },
+              title: {
+        display: true,
+        text: "Item Status Summary",  
+        font: {
+          size: 16,
+          weight: "bold"
+        },
+        color: "#333",  
+        padding: {
+          top: 10,
+          bottom: 20
+        }
+      },
+      },
+    },
+  });
+}
+
+/* -------------------------
+   Location Bar Chart
+------------------------- */
+let locationChart = null;
+function updateLocationChart(locationCounts) {
+  const ctx = document.getElementById("location-bar")?.getContext("2d");
+  if (!ctx || typeof Chart === "undefined") return;
+
+  if (locationChart) locationChart.destroy();
+
+  locationChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Object.keys(locationCounts),
+      datasets: [
+        {
+          label: "Items per Location",
+          data: Object.values(locationCounts),
+          backgroundColor: "#2D3E50",
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: { display: false },   
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: "#333" }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+              title: {
+        display: true,
+        text: "Most Populated Locations",  
+        font: {
+          size: 16,
+          weight: "bold"
+        },
+        color: "#333", 
+        padding: {
+          top: 10,
+          bottom: 20
+        }
+      },    
+        tooltip: { enabled: true }
+      }
+    }
+  });
+}
+
+/* -------------------------
+   Archive Modal
 ------------------------- */
 async function showTrashModal() {
   const overlay = document.createElement("div");
@@ -248,7 +292,7 @@ async function showTrashModal() {
   modal.style.maxWidth = "95vw";
 
   modal.innerHTML = `
-    <h2>🗑️ Trash Bin</h2>
+    <h2><i class="fa-solid fa-box-archive"></i> Archived Items</h2>
     <table class="inventory-table">
       <thead>
         <tr>
@@ -274,7 +318,7 @@ async function showTrashModal() {
     tbody.innerHTML = "";
 
     if (snapshot.empty) {
-      tbody.innerHTML = `<tr><td colspan="5">Trash is empty.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5">Archive is empty.</td></tr>`;
       return;
     }
 
@@ -331,13 +375,13 @@ async function showTrashModal() {
     });
 
   } catch (err) {
-    console.error("Error fetching trash:", err);
-    tbody.innerHTML = `<tr><td colspan="5">Error loading trash.</td></tr>`;
+    console.error("Error fetching archive:", err);
+    tbody.innerHTML = `<tr><td colspan="5">Error loading archive.</td></tr>`;
   }
 }
 
 /* -------------------------
-   Add Item with Categories + Building/Location Selection
+   Add Item with Categories + Locations
 ------------------------- */
 function showAddItemForm() {
   const overlay = document.createElement("div");
@@ -369,6 +413,7 @@ function showAddItemForm() {
       <label>Condition:</label>
       <select id="item-condition" required>
         <option value="">Select Condition</option>
+        <option>New</option>
         <option>Good</option>
         <option>Damaged</option>
         <option>For Maintenance</option>
@@ -387,7 +432,7 @@ function showAddItemForm() {
   const categorySelect = modal.querySelector("#item-category");
   const buildingSelect = modal.querySelector("#building-select");
 
-  /* --- Category → Item selection --- */
+  // ✅ Category selection (sub-modal with icons)
   categorySelect.addEventListener("change", () => {
     const category = categorySelect.value;
     nameInput.value = "";
@@ -472,7 +517,7 @@ function showAddItemForm() {
     subModal.querySelector("#sub-close").addEventListener("click", () => subOverlay.remove());
   });
 
-  /* --- Building → Location selection --- */
+  // ✅ Building selection → Location sub-modal
   buildingSelect.addEventListener("change", () => {
     const building = buildingSelect.value;
     labInput.value = "";
@@ -550,7 +595,7 @@ function showAddItemForm() {
     try {
       await addDoc(collection(db, "inventory"), {
         Name: name,
-        Laboratory: lab, // stored as Laboratory in Firestore
+        Laboratory: lab,
         Condition: condition,
         "Date added": nowLocalDateTimeString()
       });
@@ -630,6 +675,7 @@ function showEditItemForm(itemId, itemData) {
 
       <label>Condition:</label>
       <select id="edit-condition" required>
+        <option ${itemData.Condition==="New"?"selected":""}>New</option>
         <option ${itemData.Condition==="Good"?"selected":""}>Good</option>
         <option ${itemData.Condition==="Damaged"?"selected":""}>Damaged</option>
         <option ${itemData.Condition==="For Maintenance"?"selected":""}>For Maintenance</option>

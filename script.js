@@ -336,100 +336,140 @@ function animateTransition(showRegister) {
     });
   }
 
-  avatar.addEventListener('click', () => {
-    avatarDropdown.classList.toggle('visible');
-  });
+// Toggle dropdown on avatar click
+avatar.addEventListener("click", (e) => {
+  e.stopPropagation();
+  avatarDropdown.classList.toggle("visible");
+});
 
-  document.addEventListener('click', (event) => {
-    const isClickInside = avatar.contains(event.target) || avatarDropdown.contains(event.target);
-    if (!isClickInside) {
-      avatarDropdown.classList.remove('visible');
-    }
-  });
+// Prevent closing when clicking inside dropdown
+avatarDropdown.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
 
-  // ========== Auth state change ==========
-  auth.onAuthStateChanged(user => {
-    if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
-    if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+// Close dropdown when clicking outside
+document.addEventListener("click", () => {
+  avatarDropdown.classList.remove("visible");
+});
 
-    if (user) {
-      avatar.style.display = 'block';
-      loginBtn.style.display = 'none';
+// ========== Auth state change ==========
+auth.onAuthStateChanged(user => {
+  // 🔄 Clean up old listeners
+  if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
+  if (notifUnsub) { notifUnsub(); notifUnsub = null; }
 
-      db.collection('users').doc(user.uid).get()
-        .then(doc => {
-          if (doc.exists) {
-            const role = doc.data().role || 'User';
-            const userRoleDiv = document.getElementById('user-role');
-            userRoleDiv.textContent = user.email;
-            userRoleDiv.style.display = 'block';
+  if (user) {
+    // ✅ User is logged in
+    avatar.style.display = 'block';
+    loginBtn.style.display = 'none';
 
-            if (role === 'Admin' || role === 'Maintenance') {
-              inventoryLink.style.display = 'block';
-              myTicketsLink.style.display = 'none';
-              if (notifWrapper) notifWrapper.style.display = 'flex';
+    db.collection('users').doc(user.uid).get()
+      .then(doc => {
+        if (doc.exists) {
+          const role = doc.data().role || 'User';
+          const userRoleDiv = document.getElementById('user-role');
+          userRoleDiv.textContent = user.email;
+          userRoleDiv.style.display = 'block';
 
-              ticketUnsub = db.collection('tickets')
-                .orderBy('createdAt', 'desc')
-                .limit(20)
-                .onSnapshot(snapshot => {
-                  renderNotifications(snapshot.docs, true);
-                });
+          // ✅ Inventory and tickets depending on role
+          if (role === 'Admin' || role === 'Maintenance') {
+            inventoryLink.style.display = 'block';
+            myTicketsLink.style.display = 'none';
+            if (notifWrapper) notifWrapper.style.display = 'flex';
 
-            } else if (role === 'User') {
-              inventoryLink.style.display = 'none';
-              myTicketsLink.style.display = 'block';
-              if (notifWrapper) notifWrapper.style.display = 'flex';
-
-              notifUnsub = db.collection('notifications')
-                .where("createdByRole", "==", "Admin")
-                .orderBy("createdAt", "desc")
-                .limit(20)
-                .onSnapshot(snapshot => {
-                  renderNotifications(snapshot.docs, false);
-
-                  if (snapshot.empty) {
-                    const emptyEl = notifDropdown.querySelector(".notif-empty");
-                    if (emptyEl) emptyEl.style.display = "block";
-                    notifList.innerHTML = "";
-                    showNotification(0);
-                  }
-                });
-
+            // ✅ Rooms link visible only for Admins
+            const roomsLink = document.getElementById('rooms-link-a');
+            if (role === 'Admin') {
+              roomsLink.style.display = 'block';
             } else {
-              inventoryLink.style.display = 'none';
-              myTicketsLink.style.display = 'none';
-              if (notifWrapper) notifWrapper.style.display = 'none';
+              roomsLink.style.display = 'none';
             }
+
+            // Admins/Maintenance listen for new tickets
+            ticketUnsub = db.collection('tickets')
+              .orderBy('createdAt', 'desc')
+              .limit(20)
+              .onSnapshot(snapshot => {
+                renderNotifications(snapshot.docs, true);
+              });
+
+          } else if (role === 'User') {
+            inventoryLink.style.display = 'none';
+            myTicketsLink.style.display = 'block';
+            if (notifWrapper) notifWrapper.style.display = 'flex';
+
+            // Hide Rooms link for normal users
+            const roomsLink = document.getElementById('rooms-link-a');
+            roomsLink.style.display = 'none';
+
+            notifUnsub = db.collection('notifications')
+              .where("createdByRole", "==", "Admin")
+              .orderBy("createdAt", "desc")
+              .limit(20)
+              .onSnapshot(snapshot => {
+                renderNotifications(snapshot.docs, false);
+
+                if (snapshot.empty) {
+                  const emptyEl = notifDropdown.querySelector(".notif-empty");
+                  if (emptyEl) emptyEl.style.display = "block";
+                  notifList.innerHTML = "";
+                  showNotification(0);
+                }
+              });
+
           } else {
+            // Unknown role fallback
             inventoryLink.style.display = 'none';
             myTicketsLink.style.display = 'none';
             if (notifWrapper) notifWrapper.style.display = 'none';
+
+            // Hide Rooms link by default
+            const roomsLink = document.getElementById('rooms-link-a');
+            roomsLink.style.display = 'none';
           }
-        })
-        .catch(error => {
-          console.error("Error fetching user role:", error);
+        } else {
+          // No user doc found
           inventoryLink.style.display = 'none';
           myTicketsLink.style.display = 'none';
           if (notifWrapper) notifWrapper.style.display = 'none';
-        });
 
-    } else {
-      avatar.style.display = 'none';
-      loginBtn.style.display = 'flex';
-      inventoryLink.style.display = 'none';
-      myTicketsLink.style.display = 'none';
-      document.getElementById('user-role').style.display = 'none';
-      if (notifWrapper) notifWrapper.style.display = 'none';
+          // Hide Rooms link by default
+          const roomsLink = document.getElementById('rooms-link-a');
+          roomsLink.style.display = 'none';
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching user role:", error);
+        inventoryLink.style.display = 'none';
+        myTicketsLink.style.display = 'none';
+        if (notifWrapper) notifWrapper.style.display = 'none';
 
-      notifList.innerHTML = "";
-      showNotification(0);
+        // Hide Rooms link on error
+        const roomsLink = document.getElementById('rooms-link-a');
+        roomsLink.style.display = 'none';
+      });
 
-      if (notifDropdown.querySelector(".notif-empty")) {
-        notifDropdown.querySelector(".notif-empty").style.display = "block";
-      }
-    }
-  });
+  } else {
+    // ❌ User is logged out
+    avatar.style.display = 'none';
+    loginBtn.style.display = 'inline-flex'; // 🔥 always visible now
+    inventoryLink.style.display = 'none';
+    myTicketsLink.style.display = 'none';
+    document.getElementById('user-role').style.display = 'none';
+    if (notifWrapper) notifWrapper.style.display = 'none';
+
+    notifList.innerHTML = "";
+    showNotification(0);
+
+    const emptyEl = notifDropdown.querySelector(".notif-empty");
+    if (emptyEl) emptyEl.style.display = "block";
+
+    // Hide Rooms link when logged out
+    const roomsLink = document.getElementById('rooms-link-a');
+    roomsLink.style.display = 'none';
+  }
+});
+
 
   // 🔔 Dropdown toggle
   if (notifBtn) {
@@ -445,25 +485,27 @@ function animateTransition(showRegister) {
   }
 
   // ========== Nav ==========
-  const navUl = document.querySelector('nav.navbar ul');
+  const navUl = document.querySelector('nav.side-nav ul');
 
-  navUl.addEventListener('click', function (e) {
-    if (e.target.tagName === 'A') {
-      const id = e.target.id;
-      const pageMap = {
-        'home-link': 'home',
-        'my-tickets-link-a': 'mytickets',
-        'inventory-link-a': 'inventory',
-        'profile-link': 'profile'
-      };
 
-      if (pageMap[id]) {
-        e.preventDefault();
-        loadPage(pageMap[id]);
-        setActiveLink(e.target);
-      }
+navUl.addEventListener('click', function (e) {
+  if (e.target.tagName === 'A') {
+    const id = e.target.id;
+    const pageMap = {
+      'home-link': 'home',
+      'my-tickets-link-a': 'mytickets',
+      'inventory-link-a': 'inventory',
+      'profile-link': 'profile',
+      'rooms-link-a': 'rooms' 
+    };
+
+    if (pageMap[id]) {
+      e.preventDefault();
+      loadPage(pageMap[id]);
+      setActiveLink(e.target);
     }
-  });
+  }
+});
 
   function setActiveLink(activeLink) {
     const allLinks = navUl.querySelectorAll('li a');
@@ -471,83 +513,105 @@ function animateTransition(showRegister) {
     activeLink.classList.add('active');
   }
 
-  // ========== Dynamic Page Loader ==========
-  function loadPage(page) {
-    let fileName = '';
-    let bgImage = '';
+// ========== Dynamic Page Loader ==========
+function loadPage(page) {
+  let fileName = '';
+  let bgImage = '';
 
-    switch (page) {
-      case 'home':
-        fileName = 'home.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
-        break;
-      case 'mytickets':
-        fileName = 'tickets-content.html';
-        bgImage = "url('Assets/BG_Inventory.jpg')";
-        break;
-      case 'inventory':
-        fileName = 'inventory.html';
-        bgImage = "url('Assets/BG_Inventory.jpg')";
-        break;
-      case 'profile':
-        fileName = 'profile.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
-        break;
-      default:
-        fileName = 'home.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
+  switch (page) {
+    case 'home':
+      fileName = 'home.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
+      break;
+    case 'mytickets':
+      fileName = 'tickets-content.html';
+      bgImage = "url('Assets/BG_Inventory.jpg')";
+      break;
+    case 'inventory':
+      fileName = 'inventory.html';
+      bgImage = "url('Assets/BG_Inventory.jpg')";
+      break;
+    case 'profile':
+      fileName = 'profile.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
+      break;
+    case 'rooms':
+      fileName = 'rooms.html';
+      break;
+    default:
+      fileName = 'home.html';
+      bgImage = "url('Assets/BG_Main.jpg')";
+  }
+
+  fetch(fileName)
+    .then(response => {
+      if (!response.ok) throw new Error('Page not found');
+      return response.text();
+    })
+    .then(html => {
+      document.getElementById('main-content').innerHTML = html;
+      document.body.style.backgroundImage = bgImage;
+
+      function loadCSS(id, href) {
+        // Remove ALL previously loaded page-specific CSS
+        const pageCSS = document.querySelectorAll('link[id$="-css"]');
+        pageCSS.forEach(link => link.remove());
+
+        // Add the new CSS
+        const cssLink = document.createElement('link');
+        cssLink.id = id;
+        cssLink.rel = 'stylesheet';
+        cssLink.href = href;
+        document.head.appendChild(cssLink);
+      }
+
+
+    function loadJS(id, src, isModule = true) {
+      const oldScript = document.getElementById(id);
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = id;
+      script.src = `${src}?t=${Date.now()}`;
+
+      script.type = isModule ? 'module' : 'text/javascript';
+      script.defer = true;
+
+      script.onload = () => console.log(`✅ Loaded ${src}`);
+      script.onerror = () => console.error(`❌ Failed to load ${src}`);
+
+      document.body.appendChild(script);
     }
 
-    fetch(fileName)
-      .then(response => {
-        if (!response.ok) throw new Error('Page not found');
-        return response.text();
-      })
-      .then(html => {
-        document.getElementById('main-content').innerHTML = html;
-        document.body.style.backgroundImage = bgImage;
+      if (page === 'inventory') {
+        loadCSS('inventory-css', 'inventory.css');
 
-        function loadCSS(id, href) {
-          if (!document.getElementById(id)) {
-            const cssLink = document.createElement('link');
-            cssLink.id = id;
-            cssLink.rel = 'stylesheet';
-            cssLink.href = href;
-            document.head.appendChild(cssLink);
-          }
-        }
+        // 1. Load Chart.js first (classic script, NOT a module)
+        loadJS('chart-lib', 'chart.umd.js', false);
 
-        function loadJS(id, src) {
-          const oldScript = document.getElementById(id);
-          if (oldScript) oldScript.remove();
+        // 2. Then load your inventory logic (module)
+        loadJS('inventory-js', 'inventory.js', true);
+      }
 
-          const script = document.createElement('script');
-          script.id = id;
-          script.src = `${src}?t=${Date.now()}`;
-          script.type = 'module';
-          script.defer = true;
-          document.body.appendChild(script);
-        }
+      if (page === 'mytickets') {
+        loadCSS('tickets-css', 'tickets-content.css');
+        loadJS('tickets-js', 'tickets-content.js');
+      }
 
-        if (page === 'inventory') {
-          loadCSS('inventory-css', 'inventory.css');
-          loadJS('inventory-js', 'inventory.js');
-        }
+      if (page === 'profile') {
+        loadCSS('profile-css', 'profile.css');
+        loadJS('profile-js', 'profile.js');
+      }
 
-        if (page === 'mytickets') {
-          loadCSS('tickets-css', 'tickets-content.css');
-          loadJS('tickets-js', 'tickets-content.js');
-        }
+      if (page === 'rooms') {
+        loadJS('chart-lib', 'chart.umd.js', false);
+        loadCSS('rooms-css', 'rooms.css');
+        loadJS('rooms-js', 'rooms.js');
+      }
 
-        if (page === 'profile') {
-          loadCSS('profile-css', 'profile.css');
-          loadJS('profile-js', 'profile.js');
-        }
-
-      })
-      .catch(err => {
-        document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
-        console.error(err);
-      });
-  }
-};
+    })
+    .catch(err => {
+      document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
+      console.error(err);
+    });
+}};

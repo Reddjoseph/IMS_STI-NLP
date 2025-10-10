@@ -292,7 +292,7 @@ window.onload = function () {
   avatarDropdown.addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", () => avatarDropdown.classList.remove("visible"));
 
-  // ==================== AUTH STATE CHANGE HANDLER ====================
+ // ==================== AUTH STATE CHANGE HANDLER ====================
   auth.onAuthStateChanged(user => {
     if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
     if (notifUnsub) { notifUnsub(); notifUnsub = null; }
@@ -308,22 +308,43 @@ window.onload = function () {
             userRoleDiv.textContent = user.email;
             userRoleDiv.style.display = 'block';
 
+            // Default visibility reset
+            inventoryLink.style.display = 'none';
+            myTicketsLink.style.display = 'none';
+            document.getElementById('rooms-link-a').style.display = 'none';
+            document.getElementById('tasks-link').style.display = 'none';
+            if (notifWrapper) notifWrapper.style.display = 'none';
+
             if (role === 'Admin' || role === 'Maintenance') {
-              inventoryLink.style.display = 'block';
-              myTicketsLink.style.display = 'block';
               if (notifWrapper) notifWrapper.style.display = 'flex';
 
               const roomsLink = document.getElementById('rooms-link-a');
-              roomsLink.style.display = role === 'Admin' ? 'block' : 'none';
               const tasksLink = document.getElementById('tasks-link');
-              tasksLink.style.display = role === 'Maintenance' ? 'block' : 'none';
 
+              // Admin access (Inventory + Tickets + Rooms)
+              if (role === 'Admin') {
+                inventoryLink.style.display = 'block';
+                myTicketsLink.style.display = 'block';
+                roomsLink.style.display = 'block';
+                tasksLink.style.display = 'none';
+              }
+
+              // Maintenance access (Tasks only)
+              if (role === 'Maintenance') {
+                roomsLink.style.display = 'none';
+                inventoryLink.style.display = 'none';   // hide inventory
+                myTicketsLink.style.display = 'none';   // hide tickets
+                tasksLink.style.display = 'block';      // show tasks
+              }
+
+              // 🔔 Shared listener for Admin & Maintenance (don't remove!)
               ticketUnsub = db.collection('tickets')
                 .orderBy('createdAt', 'desc')
                 .limit(20)
                 .onSnapshot(snapshot => renderNotifications(snapshot.docs, true));
 
             } else if (role === 'User') {
+              // User (Tickets only)
               inventoryLink.style.display = 'none';
               myTicketsLink.style.display = 'block';
               if (notifWrapper) notifWrapper.style.display = 'flex';
@@ -369,8 +390,11 @@ window.onload = function () {
       const emptyEl = notifDropdown.querySelector(".notif-empty");
       if (emptyEl) emptyEl.style.display = "block";
       document.getElementById('rooms-link-a').style.display = 'none';
+        const roomsLi = document.getElementById('rooms-link');
+        if (roomsLi) roomsLi.style.display = 'none';
     }
   });
+
 
   // ==================== NOTIFICATION DROPDOWN ====================
   if (notifBtn) {

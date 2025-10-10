@@ -1,17 +1,43 @@
-<div class="profile-container">
-  <div class="profile-header">
-    <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" 
-         alt="User Avatar" id="profile-avatar">
-    <h2 id="profile-name">User Profile</h2>
-  </div>
-  <div class="profile-details">
-    <div class="profile-label">Email:</div>
-    <div id="profile-email">Loading...</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Profile</title>
+  <!-- ✅ External stylesheet handles all layout and styling -->
+  <link rel="stylesheet" href="profile.css" />
+</head>
 
-    <div class="profile-label">Role:</div>
-    <div id="profile-role">Loading...</div>
+<body>
+  <div class="profile-container">
+    <div class="profile-header">
+      <!-- ✅ Default avatar placeholder; will be replaced by uploaded photo -->
+      <img
+        id="profile-avatar"
+        alt="User Avatar"
+        src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+        onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';"
+      />
+      <div>
+        <h2 id="profile-name">User Profile</h2>
+        <button id="upload-btn" class="upload-button">Change Photo</button>
+        <input type="file" id="avatar-upload" accept="image/*" style="display:none;" />
+      </div>
+    </div>
 
-    <div class="profile-label">Created At:</div>
-    <div id="profile-created">Loading...</div>
+    <div class="profile-details">
+      <div class="profile-label">Email:</div>
+      <div id="profile-email">Loading...</div>
+
+      <div class="profile-label">Role:</div>
+      <div id="profile-role">Loading...</div>
+
+      <div class="profile-label">Created At:</div>
+      <div id="profile-created">Loading...</div>
+    </div>
   </div>
-</div>
+
+  <!-- ✅ Firebase-connected script -->
+  <script type="module" src="profile.js"></script>
+</body>
+</html>

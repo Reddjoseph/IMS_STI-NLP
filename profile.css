@@ -65,3 +65,31 @@
     color: #333;
   }
 }
+
+.upload-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.upload-button:hover {
+  background: #1e4fc4;
+}
+
+#profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ccc;
+  display: block;
+  background: none; /* remove overlay */
+}
+
+

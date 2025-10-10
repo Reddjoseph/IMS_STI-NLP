@@ -1,48 +1,143 @@
-// profile.js
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    firebase.firestore().collection("users").doc(user.uid).get()
-      .then(doc => {
-        if (doc.exists) {
-          const data = doc.data();
+// ✅ profile.js — Fully working & auto-refreshing avatar (CORS-safe + DOM-sync fix)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
-          //  Display full name at the top
-          const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-          document.getElementById("profile-name").textContent =
-            fullName || user.email.split("@")[0];
+// === Your Firebase configuration ===
+const firebaseConfig = {
+  apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
+  authDomain: "fir-inventory-2e62a.firebaseapp.com",
+  projectId: "fir-inventory-2e62a",
+  storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+  messagingSenderId: "380849220480",
+  appId: "1:380849220480:web:5a43b227bab9f9a197af65",
+  measurementId: "G-ERT87GL4XC"
+};
 
-          //  Keep showing email under "Email"
-          document.getElementById("profile-email").textContent = user.email;
+// === Initialize Firebase services ===
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app, "gs://fir-inventory-2e62a.firebasestorage.app");
 
-          //  Role
-          document.getElementById("profile-role").textContent = data.role || "User";
+// === DOM elements ===
+const uploadBtn = document.getElementById("upload-btn");
+const fileInput = document.getElementById("avatar-upload");
+const nameEl = document.getElementById("profile-name");
+const emailEl = document.getElementById("profile-email");
+const roleEl = document.getElementById("profile-role");
+const createdEl = document.getElementById("profile-created");
 
-          //  Created date
-          if (data.createdAt) {
-            document.getElementById("profile-created").textContent =
-              data.createdAt.toDate().toLocaleString();
-          } else {
-            document.getElementById("profile-created").textContent = "N/A";
-          }
-        } else {
-          document.getElementById("profile-name").textContent = user.email.split("@")[0];
-          document.getElementById("profile-email").textContent = user.email;
-          document.getElementById("profile-role").textContent = "N/A";
-          document.getElementById("profile-created").textContent = "N/A";
-        }
-      })
-      .catch(err => {
-        console.error("Error loading profile:", err);
-      });
+// === Helper: safely load avatar, ensure correct element, and bypass cache ===
+async function loadAvatar(url) {
+  console.log("🖼️ Trying to load avatar:", url);
 
-    // Sync avatar from navbar
-    const avatarImg = document.querySelector("#user-avatar img");
-    if (avatarImg) {
-      document.getElementById("profile-avatar").src = avatarImg.src;
+  try {
+    const avatarImg = document.getElementById("profile-avatar");
+    if (!avatarImg) {
+      console.warn("⚠️ Avatar element not found in DOM yet.");
+      return;
     }
-  } else {
-    // If not logged in → redirect to login
-    document.getElementById("main-content").innerHTML =
-      "<p style='color:red; text-align:center;'>Please log in to view your profile.</p>";
+
+    const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+    console.log("HEAD status:", res.status);
+
+    if (res.ok) {
+      const freshUrl = url + "?t=" + Date.now();
+      avatarImg.style.background = "none";
+      avatarImg.src = freshUrl;
+      console.log("✅ Avatar src updated to:", freshUrl);
+    } else {
+      avatarImg.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+      console.warn("⚠️ Avatar URL invalid, using default.");
+    }
+  } catch (err) {
+    console.error("❌ Avatar load failed:", err);
+    const avatarImg = document.getElementById("profile-avatar");
+    if (avatarImg)
+      avatarImg.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  }
+}
+
+// === Load user profile ===
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    document.querySelector(".profile-container").innerHTML = `
+      <p style="color:red; text-align:center;">Please log in to view your profile.</p>`;
+    return;
+  }
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+      nameEl.textContent = fullName || user.email.split("@")[0];
+      emailEl.textContent = data.email || user.email;
+      roleEl.textContent = data.role || "User";
+      createdEl.textContent = data.createdAt
+        ? data.createdAt.toDate().toLocaleString()
+        : "N/A";
+
+      if (data.avatarURL) {
+        await loadAvatar(data.avatarURL);
+      } else {
+        const avatarImg = document.getElementById("profile-avatar");
+        avatarImg.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+      }
+    } else {
+      emailEl.textContent = user.email;
+      roleEl.textContent = "N/A";
+      createdEl.textContent = "N/A";
+    }
+  } catch (err) {
+    console.error("Error loading profile:", err);
+  }
+});
+
+// === Handle avatar upload ===
+uploadBtn.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async (e) => {
+  const user = auth.currentUser;
+  if (!user) return alert("Please log in first.");
+
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    console.log("Uploading file...");
+    const fileRef = ref(storage, `avatars/${user.uid}.jpg`);
+    await uploadBytes(fileRef, file);
+    console.log("✅ Upload complete");
+
+    const url = await getDownloadURL(fileRef);
+    console.log("✅ Download URL obtained:", url);
+
+    await updateDoc(doc(db, "users", user.uid), { avatarURL: url });
+    console.log("✅ Firestore updated with new avatar URL");
+
+    // Wait a short delay before updating image to ensure DOM is stable
+    setTimeout(() => loadAvatar(url), 500);
+
+    alert("Profile photo updated successfully!");
+  } catch (err) {
+    console.error("❌ Upload failed:", err);
+    alert("Error uploading photo: " + err.message);
   }
 });

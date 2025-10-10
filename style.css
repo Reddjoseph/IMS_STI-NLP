@@ -545,3 +545,25 @@ nav.navbar ul li.login-avatar-group {
 .side-nav ul li a.active {
   background: #2563eb;
 }
+
+.side-nav ul li a {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 20px !important; 
+  box-sizing: border-box;
+}
+
+#rooms-link {
+  width: 100% !important;
+}
+#rooms-link-a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding-left: 20px !important;  
+  padding-right: 20px !important;
+  box-sizing: border-box !important;
+}

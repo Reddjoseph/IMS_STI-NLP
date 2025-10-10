@@ -58,7 +58,7 @@ html, body {
   border-radius: 8px;
   background: #fff;
   overflow: hidden;
-  height: 350px; /* balanced table height */
+  height: 350px;
   display: flex;
   flex-direction: column;
 }
@@ -268,7 +268,7 @@ html, body {
 
 #itemsChart {
   width: 100% !important;
-  height: auto !important;   /* ✅ let Chart.js keep aspect ratio */
+  height: auto !important;  
 }
 
 /* CARD HOVER */

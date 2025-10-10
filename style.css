@@ -107,7 +107,7 @@ nav.navbar ul li.login-avatar-group {
 }
 
 .login-btn:hover {
-  transform: scale(1.08); /* enlarge slightly on hover */
+  transform: scale(1.08); 
 }
 
 
@@ -244,16 +244,16 @@ nav.navbar ul li.login-avatar-group {
 
 #login-modal input,
 #login-modal select {
-  width: calc(100% - 20px); /* shrink to leave spacing */
+  width: calc(100% - 20px); 
   padding: 10px 12px;
-  margin: 0 auto 12px auto; /* center inputs inside modal */
+  margin: 0 auto 12px auto; 
   border: 1.5px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
   color: #000;
   background: #fff;
-  display: block; /* ensure proper centering */
-  box-sizing: border-box; /* padding counted in width */
+  display: block; 
+  box-sizing: border-box; 
 }
 
 #login-modal input:focus,
@@ -514,8 +514,8 @@ nav.navbar ul li.login-avatar-group {
 
 .side-nav ul li {
   width: 100%;
-  margin: 0 0 10px 0 !important;   /* ✅ enforce smaller vertical gap */
-  padding: 0 !important;           /* ✅ remove extra padding */
+  margin: 0 0 10px 0 !important;  
+  padding: 0 !important;           
   height: auto !important;
 }
 

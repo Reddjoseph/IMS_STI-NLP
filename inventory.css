@@ -207,7 +207,7 @@ h1 {
 .inventory-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;  /* ✅ consistent column widths */
+  table-layout: fixed;  
 }
 
 /* Table Header */
@@ -262,9 +262,9 @@ h1 {
 .inventory-table tbody tr:nth-child(even) { background-color: #f2f4f7; }
 .inventory-table tbody tr:hover { background-color: #f1f5f9; }
 
-/* ===========================
+/* =================================
    Column Widths (forces alignment)
-   =========================== */
+   ================================= */
 .inventory-table th:nth-child(1),
 .inventory-table td:nth-child(1) { width: 80px;  text-align: center; }
 
@@ -535,9 +535,9 @@ button.qr-btn {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===========================
+/* =============================================
    Layout: Stats + Table (Left) | Chart (Right)
-   =========================== */
+   ============================================= */
 .layout {
   display: flex;
   gap: 20px;
@@ -604,7 +604,7 @@ button.qr-btn {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  margin-top: 20px; /* space below the first chart */
+  margin-top: 20px; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
@@ -640,7 +640,7 @@ button.qr-btn {
   border-radius: 999px; /* pill shape */
   font-size: 13px;
   font-weight: 600;
-  color: #fff !important; /* keep text white */
+  color: #fff !important; 
   text-align: center;
   white-space: nowrap;
 }
@@ -716,8 +716,8 @@ button.qr-btn {
    =========================== */
 .inventory-table-wrapper::-webkit-scrollbar,
 #latest-items-list::-webkit-scrollbar {
-  width: 10px;   /* scrollbar width */
-  height: 10px;  /* for horizontal scroll if ever */
+  width: 10px;   
+  height: 10px;  
 }
 
 .inventory-table-wrapper::-webkit-scrollbar-track,
@@ -728,14 +728,14 @@ button.qr-btn {
 
 .inventory-table-wrapper::-webkit-scrollbar-thumb,
 #latest-items-list::-webkit-scrollbar-thumb {
-  background-color: #2D3E50; /* matches your side-nav */
+  background-color: #2D3E50; 
   border-radius: 6px;
-  border: 2px solid #e5e7eb; /* adds padding effect */
+  border: 2px solid #e5e7eb; 
 }
 
 .inventory-table-wrapper::-webkit-scrollbar-thumb:hover,
 #latest-items-list::-webkit-scrollbar-thumb:hover {
-  background-color: #3a4f65; /* slightly lighter on hover */
+  background-color: #3a4f65; 
 }
 
 /* Firefox support */

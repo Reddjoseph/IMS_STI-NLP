@@ -145,7 +145,7 @@
 
 /* ✅ Modal (consistent with tickets) */
 .tc-modal {
-  display: flex; /* default flex layout */
+  display: flex; 
   align-items: center;
   justify-content: center;
   position: fixed;

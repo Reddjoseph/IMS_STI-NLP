@@ -189,7 +189,8 @@ function updateChart(newItems, goodItems, maintenanceItems, replacementItems) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false
+      ,
       plugins: {
         legend: {
           position: "bottom",
@@ -597,7 +598,8 @@ function showAddItemForm() {
         Name: name,
         Laboratory: lab,
         Condition: condition,
-        "Date added": nowLocalDateTimeString()
+        "Date added": nowLocalDateTimeString(),
+        MaintenanceDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       });
       alert("✅ Item added!");
       overlay.remove();

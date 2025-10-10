@@ -10,13 +10,14 @@
   <!-- Tickets Table -->
   <table class="tickets-table">
     <thead>
-      <tr>
+      <tr id="tc-headerRow">
         <th>ID</th>
         <th>Item</th>
         <th>Concern</th>
         <th>Description</th>
         <th>Status</th>
         <th>Actions</th>
+        <!-- Handler column will be dynamically added for Admins -->
         <th>Feedback</th>
       </tr>
     </thead>
@@ -32,10 +33,9 @@
   </div>
 </div>
 
-<!-- FAQ Section (inside wrapper for uniform width) -->
+<!-- FAQ Section -->
 <div class="tickets-faq">
   <h3>Frequently Asked Questions</h3>
-
   <div class="faq-item">
     <button class="faq-question">
       How long should my tickets be resolved?
@@ -45,12 +45,10 @@
       <p>
         Administrators are working hard to resolve your submitted tickets.
         Most concerns are addressed within <strong>3–5 working days</strong>,
-        depending on the complexity of the issue. For urgent matters, please
-        ensure you provide clear details so they can assist you faster.
+        depending on the complexity of the issue.
       </p>
     </div>
   </div>
-
   <div class="faq-item">
     <button class="faq-question">
       How will I know if there’s an update on my ticket?
@@ -58,10 +56,8 @@
     </button>
     <div class="faq-answer">
       <p>
-        You can check your ticket’s <strong>Status</strong> in the table. 
-        When administrators leave remarks or updates, they appear in the 
-        <strong>Feedback</strong> section. For major progress, you may also 
-        receive an email or notification, depending on your account settings.
+        You can check your ticket’s <strong>Status</strong> in the table.
+        Updates appear in the <strong>Feedback</strong> section.
       </p>
     </div>
   </div>
@@ -72,7 +68,6 @@
   <div class="tc-modal__content">
     <button id="tc-closeModal" class="tc-modal__close">&times;</button>
     <h3>Create Ticket</h3>
-
     <label for="tc-ticketConcern">Concern</label>
     <input type="text" id="tc-ticketConcern" placeholder="Enter concern">
 
@@ -86,7 +81,7 @@
   </div>
 </div>
 
-<!-- Feedback Modal for Users -->
+<!-- Feedback Modal -->
 <div id="viewFeedbackModal" class="tc-modal" aria-hidden="true">
   <div class="tc-modal__content">
     <button id="closeViewFeedback" class="tc-modal__close">&times;</button>
@@ -101,5 +96,34 @@
     <button id="closeViewDescription" class="tc-modal__close">&times;</button>
     <h3>Ticket Description</h3>
     <p id="fullDescriptionText"></p>
+  </div>
+</div>
+
+<!-- Set Deadline Modal -->
+<div id="setDeadlineModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content">
+    <button id="closeDeadlineModal" class="tc-modal__close">&times;</button>
+    <h3>Set Task Deadline</h3>
+
+    <label for="deadlineDate">Deadline Date</label>
+    <input type="date" id="deadlineDate">
+
+    <label for="deadlineNote">Additional Note (optional)</label>
+    <textarea id="deadlineNote" rows="3" placeholder="Add a short note for the maintenance staff..."></textarea>
+
+    <button id="saveDeadlineBtn" class="btn-primary">Save</button>
+  </div>
+</div>
+
+<!-- 🧰 Review Submission Modal -->
+<div id="reviewSubmissionModal" class="tc-modal" aria-hidden="true">
+  <div class="tc-modal__content">
+    <button id="closeReviewModal" class="tc-modal__close">&times;</button>
+    <h3>Review Task Submission</h3>
+    <p><strong>Submitted by:</strong> <span id="submittedByName">—</span></p>
+    <div class="modal-actions">
+      <button id="markSolvedBtn" class="btn-primary">Mark as Solved</button>
+      <button id="markUnsolvedBtn" class="btn-danger">Mark as Unsolved</button>
+    </div>
   </div>
 </div>

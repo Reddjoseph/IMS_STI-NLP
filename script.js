@@ -1,8 +1,9 @@
+// ==================== MAIN SCRIPT ====================
 window.onload = function () {
   console.log("Script loaded and window.onload triggered");
   loadPage('home');
 
-  // Firebase config and initialization
+  // ==================== FIREBASE CONFIGURATION ====================
   const firebaseConfig = {
     apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
     authDomain: "fir-inventory-2e62a.firebaseapp.com",
@@ -17,7 +18,7 @@ window.onload = function () {
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  // DOM Elements
+  // ==================== DOM ELEMENTS ====================
   const loginModal = document.getElementById('login-modal');
   const loginBtn = document.querySelector('.login-btn');
   const closeLogin = document.getElementById('close-login');
@@ -27,32 +28,28 @@ window.onload = function () {
   const loginActionBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
   const profileBtn = document.getElementById('profile-btn');
-
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const loginError = document.getElementById('login-error');
-
   const avatar = document.getElementById('user-avatar');
   const avatarDropdown = document.getElementById('avatar-dropdown');
   const inventoryLink = document.getElementById('inventory-link');
   const myTicketsLink = document.getElementById('my-tickets-link');
   const loginGroup = document.querySelector('.login-avatar-group');
-
   const roleSelect = document.getElementById('role-select');
   const modalTitle = loginModal.querySelector('h2');
 
-  // 🔔 Notification Elements
+  // ==================== NOTIFICATION ELEMENTS ====================
   const notifWrapper = document.getElementById('notification-wrapper');
   const notifBtn = document.getElementById('notification-btn');
   const notifCount = document.getElementById('notification-count');
   const notifDropdown = document.getElementById('notification-dropdown');
   const notifList = document.getElementById('notification-list');
 
-  // 🔔 Keep track of listeners
   let ticketUnsub = null;
   let notifUnsub = null;
 
-  // ========== Firestore-based Dismissed Helpers ==========
+  // ==================== NOTIFICATION HELPERS ====================
   async function getDismissed(uid) {
     if (!uid) return [];
     try {
@@ -60,8 +57,7 @@ window.onload = function () {
       return doc.exists && Array.isArray(doc.data().dismissedNotifs)
         ? doc.data().dismissedNotifs
         : [];
-    } catch (e) {
-      console.error("Error fetching dismissed notifications:", e);
+    } catch {
       return [];
     }
   }
@@ -78,28 +74,24 @@ window.onload = function () {
     }
   }
 
-function showNotification(count) {
-  if (!notifCount) return;
-
-  if (count > 0) {
-    // Animate change
-    notifCount.classList.remove("count-animate");
-    void notifCount.offsetWidth; // restart animation
-    notifCount.classList.add("count-animate");
-
-    notifCount.textContent = count;
-    notifCount.style.display = "inline-flex";
-  } else {
-    notifCount.style.display = "none";
+  function showNotification(count) {
+    if (!notifCount) return;
+    if (count > 0) {
+      notifCount.classList.remove("count-animate");
+      void notifCount.offsetWidth;
+      notifCount.classList.add("count-animate");
+      notifCount.textContent = count;
+      notifCount.style.display = "inline-flex";
+    } else {
+      notifCount.style.display = "none";
+    }
   }
-}
 
-  // ✅ Render notifications with fade-out dismissal
+  // ==================== NOTIFICATION RENDERER ====================
   async function renderNotifications(docs, isAdmin = false) {
     notifList.innerHTML = "";
     const uid = auth.currentUser ? auth.currentUser.uid : null;
     if (!uid) return;
-
     const dismissed = await getDismissed(uid);
     let activeDocs = docs.filter(doc => !dismissed.includes(doc.id));
 
@@ -113,41 +105,32 @@ function showNotification(count) {
       activeDocs.forEach(doc => {
         const data = doc.data();
         const li = document.createElement("li");
-
         const rawDate = data.createdAt?.toDate() || new Date();
         const dateStr = rawDate.toLocaleString(undefined, {
           year: 'numeric', month: 'short', day: 'numeric',
           hour: 'numeric', minute: '2-digit', hour12: true
         });
-
         const titleSpan = document.createElement("span");
         titleSpan.classList.add("notif-text");
-        titleSpan.textContent = isAdmin
-          ? "New ticket issued"
-          : (data.message || "Notification");
+        titleSpan.textContent = isAdmin ? "New ticket issued" : (data.message || "Notification");
 
         if (isAdmin) {
           const descDiv = document.createElement("div");
           descDiv.classList.add("notif-desc");
-
           const userSpan = document.createElement("span");
           userSpan.style.fontWeight = "600";
           userSpan.style.color = "#000";
           userSpan.textContent = data.issuedByName || data.issuedBy || "Unknown user";
-
           const middleSpan = document.createElement("span");
           middleSpan.style.color = "#444";
           middleSpan.textContent = " issued a ticket regarding ";
-
           const itemSpan = document.createElement("span");
           itemSpan.style.fontWeight = "600";
           itemSpan.style.color = "#000";
           itemSpan.textContent = data.itemName || "an item";
-
           descDiv.appendChild(userSpan);
           descDiv.appendChild(middleSpan);
           descDiv.appendChild(itemSpan);
-
           li.appendChild(titleSpan);
           li.appendChild(descDiv);
         } else {
@@ -163,24 +146,17 @@ function showNotification(count) {
         const timeSpan = document.createElement("span");
         timeSpan.classList.add("notif-time");
         timeSpan.textContent = dateStr;
-
         const dismissBtn = document.createElement("span");
         dismissBtn.textContent = "×";
         dismissBtn.classList.add("dismiss-btn");
         dismissBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
-
-          // 🔥 Add fade-out effect
           li.classList.add("fade-out");
-
-          // Wait for transition to finish, then remove
           li.addEventListener("transitionend", async () => {
             li.remove();
-
             await addDismissed(uid, doc.id);
             activeDocs = activeDocs.filter(d => d.id !== doc.id);
             showNotification(activeDocs.length);
-
             if (activeDocs.length === 0) {
               const emptyEl = notifDropdown.querySelector(".notif-empty");
               if (emptyEl) emptyEl.style.display = "block";
@@ -199,126 +175,97 @@ function showNotification(count) {
         notifList.appendChild(li);
       });
     }
-
     showNotification(activeDocs.length);
   }
 
-// ========== Login/Register Transition ==========
-function animateTransition(showRegister) {
-  loginModal.classList.add('fade-transition');
-  setTimeout(() => {
-    if (showRegister) {
-      modalTitle.textContent = 'Create Account';
-      registerBtn.style.display = 'block';
-      loginActionBtn.style.display = 'none';
-      toggleRegister.style.display = 'none';
-      toggleLogin.style.display = 'block';
-      roleSelect.style.display = 'block';
+  // ==================== LOGIN & REGISTER TRANSITION ====================
+  function animateTransition(showRegister) {
+    loginModal.classList.add('fade-transition');
+    setTimeout(() => {
+      if (showRegister) {
+        modalTitle.textContent = 'Create Account';
+        registerBtn.style.display = 'block';
+        loginActionBtn.style.display = 'none';
+        toggleRegister.style.display = 'none';
+        toggleLogin.style.display = 'block';
+        roleSelect.style.display = 'block';
+        document.getElementById('first-name').style.display = 'block';
+        document.getElementById('last-name').style.display = 'block';
+      } else {
+        modalTitle.textContent = 'Login';
+        registerBtn.style.display = 'none';
+        loginActionBtn.style.display = 'block';
+        toggleRegister.style.display = 'block';
+        toggleLogin.style.display = 'none';
+        roleSelect.style.display = 'none';
+        document.getElementById('first-name').style.display = 'none';
+        document.getElementById('last-name').style.display = 'none';
+      }
+      loginModal.classList.remove('fade-transition');
+    }, 200);
+  }
 
-      // 🔹 Show name fields
-      document.getElementById('first-name').style.display = 'block';
-      document.getElementById('last-name').style.display = 'block';
-    } else {
-      modalTitle.textContent = 'Login';
-      registerBtn.style.display = 'none';
-      loginActionBtn.style.display = 'block';
-      toggleRegister.style.display = 'block';
-      toggleLogin.style.display = 'none';
-      roleSelect.style.display = 'none';
-
-      // 🔹 Hide name fields
-      document.getElementById('first-name').style.display = 'none';
-      document.getElementById('last-name').style.display = 'none';
-    }
-    loginModal.classList.remove('fade-transition');
-  }, 200);
-}
-
-
-  // Show modal
+  // ==================== LOGIN & REGISTER LOGIC ====================
   loginBtn.addEventListener('click', () => loginModal.style.display = 'block');
   closeLogin.addEventListener('click', () => loginModal.style.display = 'none');
-
-  // Switch to Register
   toggleRegister.addEventListener('click', () => animateTransition(true));
   toggleLogin.addEventListener('click', () => animateTransition(false));
 
-
-  // Register with auto-login
   registerBtn.addEventListener('click', () => {
     const firstName = document.getElementById('first-name').value.trim();
     const lastName = document.getElementById('last-name').value.trim();
     const email = emailInput.value.trim();
     const password = passwordInput.value;
     const role = roleSelect.value;
-
     if (!firstName || !lastName) {
       loginError.textContent = "Please enter your first and last name.";
       return;
     }
-
     auth.createUserWithEmailAndPassword(email, password)
       .then(userCredential => {
         const user = userCredential.user;
         return db.collection('users').doc(user.uid).set({
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          role: role,
+          firstName, lastName, email, role,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          dismissedNotifs: [] // 🔥 initialize field
+          dismissedNotifs: []
         });
       })
       .then(() => {
         loginModal.style.display = 'none';
         loginError.textContent = '';
       })
-      .catch(error => {
-        loginError.textContent = error.message;
-      });
+      .catch(error => loginError.textContent = error.message);
   });
 
-
-  // Login
   loginActionBtn.addEventListener('click', () => {
     const email = emailInput.value;
     const password = passwordInput.value;
     auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        loginModal.style.display = 'none';
-      })
-      .catch(error => {
-        loginError.textContent = error.message;
-      });
+      .then(() => loginModal.style.display = 'none')
+      .catch(error => loginError.textContent = error.message);
   });
 
-  // Logout
+  // ==================== LOGOUT LOGIC ====================
   logoutBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     try {
       await auth.signOut();
       avatarDropdown.classList.remove('visible');
-
       avatar.style.display = 'none';
       loginBtn.style.display = 'flex';
       inventoryLink.style.display = 'none';
       myTicketsLink.style.display = 'none';
       document.getElementById('user-role').style.display = 'none';
       if (notifWrapper) notifWrapper.style.display = 'none';
-
       if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
       if (notifUnsub) { notifUnsub(); notifUnsub = null; }
-
       notifList.innerHTML = "";
       showNotification(0);
-
       if (notifDropdown.querySelector(".notif-empty")) {
         notifDropdown.querySelector(".notif-empty").style.display = "block";
       }
-
       loadPage('home');
       setActiveLink(document.getElementById('home-link'));
-
       alert('You have been logged out.');
     } catch (error) {
       console.error('Logout failed:', error);
@@ -326,7 +273,7 @@ function animateTransition(showRegister) {
     }
   });
 
-  // Profile button
+  // ==================== PROFILE LINK HANDLER ====================
   if (profileBtn) {
     profileBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -335,148 +282,99 @@ function animateTransition(showRegister) {
       avatarDropdown.classList.remove('visible');
     });
   }
+  
+  // ==================== AVATAR DROPDOWN ====================
+  avatar.addEventListener("click", (e) => {
+    e.stopPropagation();
+    notifDropdown.classList.remove("visible");
+    avatarDropdown.classList.toggle("visible");
+  });
+  avatarDropdown.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => avatarDropdown.classList.remove("visible"));
 
-// Toggle dropdown on avatar click
-avatar.addEventListener("click", (e) => {
-  e.stopPropagation();
-  avatarDropdown.classList.toggle("visible");
-});
+  // ==================== AUTH STATE CHANGE HANDLER ====================
+  auth.onAuthStateChanged(user => {
+    if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
+    if (notifUnsub) { notifUnsub(); notifUnsub = null; }
 
-// Prevent closing when clicking inside dropdown
-avatarDropdown.addEventListener("click", (e) => {
-  e.stopPropagation();
-});
+    if (user) {
+      avatar.style.display = 'block';
+      loginBtn.style.display = 'none';
+      db.collection('users').doc(user.uid).get()
+        .then(doc => {
+          if (doc.exists) {
+            const role = doc.data().role || 'User';
+            const userRoleDiv = document.getElementById('user-role');
+            userRoleDiv.textContent = user.email;
+            userRoleDiv.style.display = 'block';
 
-// Close dropdown when clicking outside
-document.addEventListener("click", () => {
-  avatarDropdown.classList.remove("visible");
-});
+            if (role === 'Admin' || role === 'Maintenance') {
+              inventoryLink.style.display = 'block';
+              myTicketsLink.style.display = 'block';
+              if (notifWrapper) notifWrapper.style.display = 'flex';
 
-// ========== Auth state change ==========
-auth.onAuthStateChanged(user => {
-  // 🔄 Clean up old listeners
-  if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
-  if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+              const roomsLink = document.getElementById('rooms-link-a');
+              roomsLink.style.display = role === 'Admin' ? 'block' : 'none';
+              const tasksLink = document.getElementById('tasks-link');
+              tasksLink.style.display = role === 'Maintenance' ? 'block' : 'none';
 
-  if (user) {
-    // ✅ User is logged in
-    avatar.style.display = 'block';
-    loginBtn.style.display = 'none';
+              ticketUnsub = db.collection('tickets')
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .onSnapshot(snapshot => renderNotifications(snapshot.docs, true));
 
-    db.collection('users').doc(user.uid).get()
-      .then(doc => {
-        if (doc.exists) {
-          const role = doc.data().role || 'User';
-          const userRoleDiv = document.getElementById('user-role');
-          userRoleDiv.textContent = user.email;
-          userRoleDiv.style.display = 'block';
+            } else if (role === 'User') {
+              inventoryLink.style.display = 'none';
+              myTicketsLink.style.display = 'block';
+              if (notifWrapper) notifWrapper.style.display = 'flex';
+              document.getElementById('rooms-link-a').style.display = 'none';
 
-          // ✅ Inventory and tickets depending on role
-          if (role === 'Admin' || role === 'Maintenance') {
-            inventoryLink.style.display = 'block';
-            myTicketsLink.style.display = 'none';
-            if (notifWrapper) notifWrapper.style.display = 'flex';
-
-            // ✅ Rooms link visible only for Admins
-            const roomsLink = document.getElementById('rooms-link-a');
-            if (role === 'Admin') {
-              roomsLink.style.display = 'block';
+              notifUnsub = db.collection('notifications')
+                .where("createdByRole", "==", "Admin")
+                .orderBy("createdAt", "desc")
+                .limit(20)
+                .onSnapshot(snapshot => {
+                  renderNotifications(snapshot.docs, false);
+                  if (snapshot.empty) {
+                    const emptyEl = notifDropdown.querySelector(".notif-empty");
+                    if (emptyEl) emptyEl.style.display = "block";
+                    notifList.innerHTML = "";
+                    showNotification(0);
+                  }
+                });
             } else {
-              roomsLink.style.display = 'none';
+              inventoryLink.style.display = 'none';
+              myTicketsLink.style.display = 'none';
+              if (notifWrapper) notifWrapper.style.display = 'none';
+              document.getElementById('rooms-link-a').style.display = 'none';
             }
-
-            // Admins/Maintenance listen for new tickets
-            ticketUnsub = db.collection('tickets')
-              .orderBy('createdAt', 'desc')
-              .limit(20)
-              .onSnapshot(snapshot => {
-                renderNotifications(snapshot.docs, true);
-              });
-
-          } else if (role === 'User') {
-            inventoryLink.style.display = 'none';
-            myTicketsLink.style.display = 'block';
-            if (notifWrapper) notifWrapper.style.display = 'flex';
-
-            // Hide Rooms link for normal users
-            const roomsLink = document.getElementById('rooms-link-a');
-            roomsLink.style.display = 'none';
-
-            notifUnsub = db.collection('notifications')
-              .where("createdByRole", "==", "Admin")
-              .orderBy("createdAt", "desc")
-              .limit(20)
-              .onSnapshot(snapshot => {
-                renderNotifications(snapshot.docs, false);
-
-                if (snapshot.empty) {
-                  const emptyEl = notifDropdown.querySelector(".notif-empty");
-                  if (emptyEl) emptyEl.style.display = "block";
-                  notifList.innerHTML = "";
-                  showNotification(0);
-                }
-              });
-
-          } else {
-            // Unknown role fallback
-            inventoryLink.style.display = 'none';
-            myTicketsLink.style.display = 'none';
-            if (notifWrapper) notifWrapper.style.display = 'none';
-
-            // Hide Rooms link by default
-            const roomsLink = document.getElementById('rooms-link-a');
-            roomsLink.style.display = 'none';
           }
-        } else {
-          // No user doc found
+        })
+        .catch(() => {
           inventoryLink.style.display = 'none';
           myTicketsLink.style.display = 'none';
           if (notifWrapper) notifWrapper.style.display = 'none';
+          document.getElementById('rooms-link-a').style.display = 'none';
+        });
+    } else {
+      avatar.style.display = 'none';
+      loginBtn.style.display = 'inline-flex';
+      inventoryLink.style.display = 'none';
+      myTicketsLink.style.display = 'none';
+      document.getElementById('user-role').style.display = 'none';
+      document.getElementById('tasks-link').style.display = 'none';
+      if (notifWrapper) notifWrapper.style.display = 'none';
+      notifList.innerHTML = "";
+      showNotification(0);
+      const emptyEl = notifDropdown.querySelector(".notif-empty");
+      if (emptyEl) emptyEl.style.display = "block";
+      document.getElementById('rooms-link-a').style.display = 'none';
+    }
+  });
 
-          // Hide Rooms link by default
-          const roomsLink = document.getElementById('rooms-link-a');
-          roomsLink.style.display = 'none';
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching user role:", error);
-        inventoryLink.style.display = 'none';
-        myTicketsLink.style.display = 'none';
-        if (notifWrapper) notifWrapper.style.display = 'none';
-
-        // Hide Rooms link on error
-        const roomsLink = document.getElementById('rooms-link-a');
-        roomsLink.style.display = 'none';
-      });
-
-  } else {
-    // ❌ User is logged out
-    avatar.style.display = 'none';
-    loginBtn.style.display = 'inline-flex'; // 🔥 always visible now
-    inventoryLink.style.display = 'none';
-    myTicketsLink.style.display = 'none';
-    document.getElementById('user-role').style.display = 'none';
-    if (notifWrapper) notifWrapper.style.display = 'none';
-
-    notifList.innerHTML = "";
-    showNotification(0);
-
-    const emptyEl = notifDropdown.querySelector(".notif-empty");
-    if (emptyEl) emptyEl.style.display = "block";
-
-    // Hide Rooms link when logged out
-    const roomsLink = document.getElementById('rooms-link-a');
-    roomsLink.style.display = 'none';
-  }
-});
-
-
-  // 🔔 Dropdown toggle
+  // ==================== NOTIFICATION DROPDOWN ====================
   if (notifBtn) {
-    notifBtn.addEventListener('click', () => {
-      notifDropdown.classList.toggle('visible');
-    });
-
+    notifBtn.addEventListener('click', () => notifDropdown.classList.toggle('visible'));
     document.addEventListener('click', (event) => {
       if (notifWrapper && !notifWrapper.contains(event.target)) {
         notifDropdown.classList.remove('visible');
@@ -484,28 +382,26 @@ auth.onAuthStateChanged(user => {
     });
   }
 
-  // ========== Nav ==========
+  // ==================== NAVIGATION HANDLER ====================
   const navUl = document.querySelector('nav.side-nav ul');
-
-
-navUl.addEventListener('click', function (e) {
-  if (e.target.tagName === 'A') {
-    const id = e.target.id;
-    const pageMap = {
-      'home-link': 'home',
-      'my-tickets-link-a': 'mytickets',
-      'inventory-link-a': 'inventory',
-      'profile-link': 'profile',
-      'rooms-link-a': 'rooms' 
-    };
-
-    if (pageMap[id]) {
-      e.preventDefault();
-      loadPage(pageMap[id]);
-      setActiveLink(e.target);
+  navUl.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') {
+      const id = e.target.id;
+      const pageMap = {
+        'home-link': 'home',
+        'my-tickets-link-a': 'mytickets',
+        'inventory-link-a': 'inventory',
+        'profile-link': 'profile',
+        'rooms-link-a': 'rooms',
+        'tasks-link-a': 'tasks'
+      };
+      if (pageMap[id]) {
+        e.preventDefault();
+        loadPage(pageMap[id]);
+        setActiveLink(e.target);
+      }
     }
-  }
-});
+  });
 
   function setActiveLink(activeLink) {
     const allLinks = navUl.querySelectorAll('li a');
@@ -513,105 +409,95 @@ navUl.addEventListener('click', function (e) {
     activeLink.classList.add('active');
   }
 
-// ========== Dynamic Page Loader ==========
-function loadPage(page) {
-  let fileName = '';
-  let bgImage = '';
-
-  switch (page) {
-    case 'home':
-      fileName = 'home.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-      break;
-    case 'mytickets':
-      fileName = 'tickets-content.html';
-      bgImage = "url('Assets/BG_Inventory.jpg')";
-      break;
-    case 'inventory':
-      fileName = 'inventory.html';
-      bgImage = "url('Assets/BG_Inventory.jpg')";
-      break;
-    case 'profile':
-      fileName = 'profile.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-      break;
-    case 'rooms':
-      fileName = 'rooms.html';
-      break;
-    default:
-      fileName = 'home.html';
-      bgImage = "url('Assets/BG_Main.jpg')";
-  }
-
-  fetch(fileName)
-    .then(response => {
-      if (!response.ok) throw new Error('Page not found');
-      return response.text();
-    })
-    .then(html => {
-      document.getElementById('main-content').innerHTML = html;
-      document.body.style.backgroundImage = bgImage;
-
-      function loadCSS(id, href) {
-        // Remove ALL previously loaded page-specific CSS
-        const pageCSS = document.querySelectorAll('link[id$="-css"]');
-        pageCSS.forEach(link => link.remove());
-
-        // Add the new CSS
-        const cssLink = document.createElement('link');
-        cssLink.id = id;
-        cssLink.rel = 'stylesheet';
-        cssLink.href = href;
-        document.head.appendChild(cssLink);
-      }
-
-
-    function loadJS(id, src, isModule = true) {
-      const oldScript = document.getElementById(id);
-      if (oldScript) oldScript.remove();
-
-      const script = document.createElement('script');
-      script.id = id;
-      script.src = `${src}?t=${Date.now()}`;
-
-      script.type = isModule ? 'module' : 'text/javascript';
-      script.defer = true;
-
-      script.onload = () => console.log(`✅ Loaded ${src}`);
-      script.onerror = () => console.error(`❌ Failed to load ${src}`);
-
-      document.body.appendChild(script);
+  // ==================== DYNAMIC PAGE LOADER ====================
+  function loadPage(page) {
+    let fileName = '';
+    let bgImage = '';
+    switch (page) {
+      case 'home':
+        fileName = 'home.html';
+        bgImage = "url('Assets/BG_Main.jpg')";
+        break;
+      case 'mytickets':
+        fileName = 'tickets-content.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
+      case 'inventory':
+        fileName = 'inventory.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
+      case 'profile':
+        fileName = 'profile.html';
+        bgImage = "url('Assets/BG_Main.jpg')";
+        break;
+      case 'rooms':
+        fileName = 'rooms.html';
+        break;
+      case 'tasks':
+        fileName = 'tasks.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
+      default:
+        fileName = 'home.html';
+        bgImage = "url('Assets/BG_Main.jpg')";
     }
 
-      if (page === 'inventory') {
-        loadCSS('inventory-css', 'inventory.css');
+    fetch(fileName)
+      .then(response => {
+        if (!response.ok) throw new Error('Page not found');
+        return response.text();
+      })
+      .then(html => {
+        document.getElementById('main-content').innerHTML = html;
+        document.body.style.backgroundImage = bgImage;
 
-        // 1. Load Chart.js first (classic script, NOT a module)
-        loadJS('chart-lib', 'chart.umd.js', false);
+        function loadCSS(id, href) {
+          const pageCSS = document.querySelectorAll('link[id$="-css"]');
+          pageCSS.forEach(link => link.remove());
+          const cssLink = document.createElement('link');
+          cssLink.id = id;
+          cssLink.rel = 'stylesheet';
+          cssLink.href = href;
+          document.head.appendChild(cssLink);
+        }
 
-        // 2. Then load your inventory logic (module)
-        loadJS('inventory-js', 'inventory.js', true);
-      }
+        function loadJS(id, src, isModule = true) {
+          const oldScript = document.getElementById(id);
+          if (oldScript) oldScript.remove();
+          const script = document.createElement('script');
+          script.id = id;
+          script.src = `${src}?t=${Date.now()}`;
+          script.type = isModule ? 'module' : 'text/javascript';
+          script.defer = true;
+          document.body.appendChild(script);
+        }
 
-      if (page === 'mytickets') {
-        loadCSS('tickets-css', 'tickets-content.css');
-        loadJS('tickets-js', 'tickets-content.js');
-      }
-
-      if (page === 'profile') {
-        loadCSS('profile-css', 'profile.css');
-        loadJS('profile-js', 'profile.js');
-      }
-
-      if (page === 'rooms') {
-        loadJS('chart-lib', 'chart.umd.js', false);
-        loadCSS('rooms-css', 'rooms.css');
-        loadJS('rooms-js', 'rooms.js');
-      }
-
-    })
-    .catch(err => {
-      document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
-      console.error(err);
-    });
-}};
+        if (page === 'inventory') {
+          loadCSS('inventory-css', 'inventory.css');
+          loadJS('chart-lib', 'chart.umd.js', false);
+          loadJS('inventory-js', 'inventory.js', true);
+        }
+        if (page === 'mytickets') {
+          loadCSS('tickets-css', 'tickets-content.css');
+          loadJS('tickets-js', 'tickets-content.js');
+        }
+        if (page === 'profile') {
+          loadCSS('profile-css', 'profile.css');
+          loadJS('profile-js', 'profile.js');
+        }
+        if (page === 'rooms') {
+          loadJS('chart-lib', 'chart.umd.js', false);
+          loadCSS('rooms-css', 'rooms.css');
+          loadJS('rooms-js', 'rooms.js');
+        }
+        if (page === 'tasks') {
+          loadCSS('tasks-css', 'tasks.css');
+          loadJS('tasks-js', 'tasks.js');
+        }
+      })
+      .catch(err => {
+        document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';
+        console.error(err);
+      });
+  }
+};

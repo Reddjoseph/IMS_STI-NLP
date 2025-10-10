@@ -6,18 +6,18 @@ firebase.auth().onAuthStateChanged(user => {
         if (doc.exists) {
           const data = doc.data();
 
-          // ✅ Display full name at the top
+          //  Display full name at the top
           const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
           document.getElementById("profile-name").textContent =
             fullName || user.email.split("@")[0];
 
-          // ✅ Keep showing email under "Email"
+          //  Keep showing email under "Email"
           document.getElementById("profile-email").textContent = user.email;
 
-          // ✅ Role
+          //  Role
           document.getElementById("profile-role").textContent = data.role || "User";
 
-          // ✅ Created date
+          //  Created date
           if (data.createdAt) {
             document.getElementById("profile-created").textContent =
               data.createdAt.toDate().toLocaleString();

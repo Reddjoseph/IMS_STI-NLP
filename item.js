@@ -1,4 +1,4 @@
-// ✅ item.js (with Firebase Storage, Feedback History, and Working Image Display + robust image handling)
+// ✅ item.js (with Firebase Storage, Feedback History, Working Image Display + Condition Badge Styling)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
@@ -37,7 +37,20 @@ async function loadItemDetails() {
     document.getElementById("item-id").textContent = doc.id;
     document.getElementById("item-name").textContent = itemName;
     document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
-    document.getElementById("item-condition").textContent = data.Condition || "Unknown";
+
+    // ✅ Styled condition badge
+    const conditionEl = document.getElementById("item-condition");
+    const rawCondition = (data.Condition || "Unknown").toString();
+    conditionEl.textContent = rawCondition;
+
+    const safeClass = rawCondition
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    conditionEl.className = `condition-badge ${safeClass || 'unknown'}`;
+
     document.getElementById("item-date").textContent = data["Date added"] || "N/A";
 
     // ✅ Load and display item image (supports both full URLs and Firebase paths)
@@ -49,15 +62,12 @@ async function loadItemDetails() {
 
       try {
         if (data.imageURL.startsWith("http")) {
-          // already a direct URL
           imgEl.src = data.imageURL;
         } else {
-          // it's a Firebase storage path
           const url = await storage.ref(data.imageURL).getDownloadURL();
           imgEl.src = url;
         }
 
-        // fallback if broken
         imgEl.onerror = () => {
           console.warn("⚠️ Failed to load image, showing placeholder.");
           imgEl.src = placeholder;

@@ -310,3 +310,64 @@
   width: 2px;
   background: #dbeafe;
 }
+
+/* Condition badges (fixed selectors) */
+.condition-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #fff;
+  text-transform: capitalize;
+}
+
+/* Color variants (use hyphenated class names) */
+.condition-badge.new {
+  background: #3b82f6; /* blue */
+}
+.condition-badge.good {
+  background: #10b981; /* green */
+}
+.condition-badge.for-maintenance {
+  background: #facc15; /* yellow */
+  color: #111;
+}
+.condition-badge.for-replacement {
+  background: #ef4444; /* red */
+}
+
+/* fallback/unknown */
+.condition-badge.unknown {
+  background: #6b7280; /* gray */
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  background: #e5e7eb;
+  color: #111;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+  transform: translateY(-1px);
+}
+
+
+/* Mobile tweak (keeps sizing consistent) */
+@media (max-width: 768px) {
+  .condition-badge {
+    font-size: 0.82rem;
+    padding: 4px 8px;
+  }
+}
+

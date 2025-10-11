@@ -10,6 +10,13 @@ import {
   doc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+
 console.log("✅ inventory.js loaded");
 
 // ✅ Firebase config (replace with your actual config)
@@ -17,7 +24,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
   authDomain: "fir-inventory-2e62a.firebaseapp.com",
   projectId: "fir-inventory-2e62a",
-  storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+  storageBucket: "fir-inventory-2e62a.appspot.com",
   messagingSenderId: "380849220480",
   appId: "1:380849220480:web:5a43b227bab9f9a197af65",
   measurementId: "G-ERT87GL4XC"
@@ -26,6 +33,9 @@ const firebaseConfig = {
 // ✅ Initialize Firebase and Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app, "gs://fir-inventory-2e62a.appspot.com");
+
+
 
 /* -------------------------
    Helpers for Date/Time
@@ -421,6 +431,9 @@ function showAddItemForm() {
         <option>For Replacement</option>
       </select>
 
+      <label>Item Image (optional):</label>
+      <input type="file" id="item-image" accept="image/*" />
+
       <button type="submit">➕ Add Item</button>
       <button type="button" id="close-modal-btn">Cancel</button>
     </form>
@@ -593,13 +606,24 @@ function showAddItemForm() {
     const condition = modal.querySelector("#item-condition").value;
     if (!name || !lab || !condition) return alert("Fill all fields");
 
+    const fileInput = modal.querySelector("#item-image");
+    let imageURL = "";
+
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const fileRef = ref(storage, `item_images/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      imageURL = await getDownloadURL(fileRef);
+    }
+
     try {
       await addDoc(collection(db, "inventory"), {
         Name: name,
         Laboratory: lab,
         Condition: condition,
         "Date added": nowLocalDateTimeString(),
-        MaintenanceDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        MaintenanceDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        imageURL: imageURL || "",
       });
       alert("✅ Item added!");
       overlay.remove();

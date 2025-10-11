@@ -1,24 +1,28 @@
-// ✅ item.js (with Feedback History + Debugging)
+// ✅ item.js (with Firebase Storage, Feedback History, and Working Image Display + robust image handling)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
   authDomain: "fir-inventory-2e62a.firebaseapp.com",
   projectId: "fir-inventory-2e62a",
-  storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+  storageBucket: "fir-inventory-2e62a.appspot.com", // ✅ must end with .appspot.com
   messagingSenderId: "380849220480",
   appId: "1:380849220480:web:5a43b227bab9f9a197af65",
   measurementId: "G-ERT87GL4XC"
 };
 
+// ✅ Initialize Firebase
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
+const storageRef = storage.ref();
 
-// Get item ID from URL
+// ✅ Get item ID from URL
 const params = new URLSearchParams(window.location.search);
 const itemId = params.get("id");
 let itemName = "";
 let activeFeedbackTicketId = null;
 
+// ✅ Load item details
 async function loadItemDetails() {
   try {
     const doc = await db.collection("inventory").doc(itemId).get();
@@ -35,8 +39,42 @@ async function loadItemDetails() {
     document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
     document.getElementById("item-condition").textContent = data.Condition || "Unknown";
     document.getElementById("item-date").textContent = data["Date added"] || "N/A";
-    document.getElementById("item-image").src =
-      data.ImageURL || "https://via.placeholder.com/350x250?text=No+Image+Available";
+
+    // ✅ Load and display item image (supports both full URLs and Firebase paths)
+    const imgEl = document.getElementById("item-image");
+    const placeholder = "https://placehold.co/350x250?text=No+Image+Available&font=roboto";
+
+    if (data.imageURL && data.imageURL.trim() !== "") {
+      console.log("🖼️ Loading item image from:", data.imageURL);
+
+      try {
+        if (data.imageURL.startsWith("http")) {
+          // already a direct URL
+          imgEl.src = data.imageURL;
+        } else {
+          // it's a Firebase storage path
+          const url = await storage.ref(data.imageURL).getDownloadURL();
+          imgEl.src = url;
+        }
+
+        // fallback if broken
+        imgEl.onerror = () => {
+          console.warn("⚠️ Failed to load image, showing placeholder.");
+          imgEl.src = placeholder;
+        };
+      } catch (err) {
+        console.warn("⚠️ Failed to resolve image URL:", err);
+        imgEl.src = placeholder;
+      }
+    } else {
+      imgEl.src = placeholder;
+    }
+
+    // ✅ Optional: click to view larger
+    imgEl.style.cursor = "pointer";
+    imgEl.addEventListener("click", () => {
+      window.open(imgEl.src, "_blank");
+    });
 
     loadItemReports();
   } catch (err) {
@@ -44,6 +82,7 @@ async function loadItemDetails() {
   }
 }
 
+// ✅ Load item reports
 async function loadItemReports() {
   const reportsBody = document.getElementById("item-reports-body");
   reportsBody.innerHTML = "";
@@ -87,6 +126,7 @@ async function loadItemReports() {
   attachListeners();
 }
 
+// ✅ Attach UI listeners
 function attachListeners() {
   // Editable description
   document.querySelectorAll(".editable-description").forEach((input) => {
@@ -124,7 +164,7 @@ function attachListeners() {
       modal.style.display = "flex";
       modal.setAttribute("aria-hidden", "false");
 
-      // Load history from Firestore
+      // Load feedback history
       const doc = await db.collection("tickets").doc(activeFeedbackTicketId).get();
       const history = doc.data().feedbackHistory || [];
       renderFeedbackHistory(history);
@@ -132,12 +172,10 @@ function attachListeners() {
   });
 }
 
-// ✅ Save feedback with admin name
+// ✅ Save feedback
 document.getElementById("submitFeedbackBtn").addEventListener("click", async () => {
   const text = document.getElementById("feedbackText").value.trim();
   const admin = document.getElementById("adminName").value.trim();
-
-  console.log("👉 Saving feedback:", { activeFeedbackTicketId, admin, text });
 
   if (!text || !admin || !activeFeedbackTicketId) {
     alert("Please enter your name and feedback.");
@@ -151,13 +189,13 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
       timestamp: new Date(),
     };
 
-    // Try update first
-    await db.collection("tickets").doc(activeFeedbackTicketId).set(
-      { feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry) },
-      { merge: true }
-    );
-
-    console.log("✅ Feedback saved to ticket:", activeFeedbackTicketId);
+    await db
+      .collection("tickets")
+      .doc(activeFeedbackTicketId)
+      .set(
+        { feedbackHistory: firebase.firestore.FieldValue.arrayUnion(feedbackEntry) },
+        { merge: true }
+      );
 
     // Reset form
     document.getElementById("feedbackText").value = "";
@@ -185,7 +223,7 @@ document.getElementById("closeFeedbackModal").addEventListener("click", () => {
   modal.setAttribute("aria-hidden", "true");
 });
 
-// Render feedback timeline
+// ✅ Render feedback timeline
 function renderFeedbackHistory(history) {
   const container = document.getElementById("feedbackHistory");
   if (!history.length) {
@@ -194,7 +232,7 @@ function renderFeedbackHistory(history) {
   }
 
   container.innerHTML = history
-    .sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis()) // newest first
+    .sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis())
     .map(
       (f) => `
         <div class="feedback-entry">
@@ -207,6 +245,7 @@ function renderFeedbackHistory(history) {
     .join("");
 }
 
+// ✅ Escape HTML utility
 function escapeHtml(s = "") {
   return String(s)
     .replaceAll("&", "&amp;")

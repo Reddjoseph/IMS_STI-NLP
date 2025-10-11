@@ -24,7 +24,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
   authDomain: "fir-inventory-2e62a.firebaseapp.com",
   projectId: "fir-inventory-2e62a",
-  storageBucket: "fir-inventory-2e62a.appspot.com",
+  storageBucket: "fir-inventory-2e62a.firebasestorage.app",
   messagingSenderId: "380849220480",
   appId: "1:380849220480:web:5a43b227bab9f9a197af65",
   measurementId: "G-ERT87GL4XC"
@@ -33,8 +33,7 @@ const firebaseConfig = {
 // ✅ Initialize Firebase and Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app, "gs://fir-inventory-2e62a.appspot.com");
-
+const storage = getStorage(app, "gs://fir-inventory-2e62a.firebasestorage.app");
 
 
 /* -------------------------
@@ -623,7 +622,7 @@ function showAddItemForm() {
         Condition: condition,
         "Date added": nowLocalDateTimeString(),
         MaintenanceDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        imageURL: imageURL || "",
+        imageURL: imageURL || ""
       });
       alert("✅ Item added!");
       overlay.remove();

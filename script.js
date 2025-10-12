@@ -266,6 +266,9 @@ window.onload = function () {
       if (notifDropdown.querySelector(".notif-empty")) {
         notifDropdown.querySelector(".notif-empty").style.display = "block";
       }
+
+      clearPageCSS(); // 🧼 remove previous page-specific CSS
+
       loadPage('home');
       setActiveLink(document.getElementById('home-link'));
       alert('You have been logged out.');
@@ -303,6 +306,13 @@ auth.onAuthStateChanged(user => {
     avatar.style.display = 'block';
     sideNav.classList.add('active');
     loginBtn.style.display = 'none';
+    // Change background to white when logged in
+    document.body.style.background = '#ffffff';
+    document.body.style.backgroundImage = 'none';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundRepeat = '';
+    document.body.style.backgroundPosition = '';
+
 
     // ✅ Fetch user document for role and avatar
     db.collection('users').doc(user.uid).get()
@@ -421,6 +431,13 @@ auth.onAuthStateChanged(user => {
     const roomsLi = document.getElementById('rooms-link');
     if (roomsLi) roomsLi.style.display = 'none';
 
+    // ✅ Restore original background when logged out
+    document.body.style.background = "url('Assets/BG_Main.jpg') no-repeat center center fixed";
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundPosition = 'center';
+
+
     // ✅ Reset avatar image on logout
     const avatarImgEl = document.querySelector('#user-avatar img');
     if (avatarImgEl) {
@@ -466,8 +483,21 @@ auth.onAuthStateChanged(user => {
     activeLink.classList.add('active');
   }
 
+  // ==================== 🧼 CSS CLEANUP HELPER ====================
+  function clearPageCSS() {
+    const pageCSS = document.querySelectorAll('link[id$="-css"]');
+    pageCSS.forEach(link => link.remove());
+  }
+
   // ==================== DYNAMIC PAGE LOADER ====================
   function loadPage(page) {
+    clearPageCSS(); 
+      if (page === 'home') {
+        document.body.classList.add('no-scroll');
+      } else {
+        document.body.classList.remove('no-scroll');
+      }
+
     let fileName = '';
     let bgImage = '';
     switch (page) {
@@ -529,6 +559,10 @@ auth.onAuthStateChanged(user => {
           document.body.appendChild(script);
         }
 
+        if (page === 'home') {
+          loadCSS('home-css', 'home.css');
+          loadJS('home-js', 'home.js');
+        }
         if (page === 'inventory') {
           loadCSS('inventory-css', 'inventory.css');
           loadJS('chart-lib', 'chart.umd.js', false);

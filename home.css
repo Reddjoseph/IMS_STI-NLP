@@ -1,76 +1,89 @@
-/* 📦 Container for all cards */
+/* ============ Home Page Layout ============ */
 .home-container {
+  position: fixed;               /* ✅ make it fill the viewport */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   display: flex;
-  justify-content: center;
-  align-items: stretch;
+  justify-content: center;       /* center horizontally */
+  align-items: center;           /* center vertically */
   gap: 30px;
-  padding: 60px 40px;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex-wrap: nowrap;             /* keep 3 cards on one line on large screens */
+  padding: 0 20px;
   box-sizing: border-box;
-  flex-wrap: wrap; /* stacks on smaller screens */
+  z-index: 1;                    /* keep it behind the top header */
 }
 
-/* 🧊 Card styles */
+/* Card Style */
 .home-card {
-  flex: 1;
-  min-width: 300px;
-  max-width: 360px;
-  background: rgba(0, 0, 0, 0.45); /* ✅ semi-transparent */
-  backdrop-filter: blur(10px);     /* glass effect */
-  border-radius: 16px;
-  padding: 30px 20px;
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  width: 300px;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.3s ease, background 0.3s ease;
-}
-
-/* ✨ Hover effect */
-.home-card:hover {
-  transform: translateY(-6px);
-  background: rgba(0, 0, 0, 0.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .home-card h2 {
+  margin-top: 0;
   font-size: 22px;
-  margin-bottom: 15px;
-  color: #ffcc00;
+  color: #ffd700;
 }
 
 .home-card p {
   font-size: 16px;
   line-height: 1.5;
+  flex-grow: 1;
 }
 
-/* 🌐 Button */
-.home-button {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 10px 18px;
+.home-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Visit Button */
+.home-btn {
   background: #2563eb;
   color: white;
   text-decoration: none;
-  border-radius: 6px;
+  padding: 10px 0px;        /* 🟡 smaller padding */
+  border-radius: 6px;       /* 🟡 slightly smaller corners */
   text-align: center;
   font-weight: 600;
+  font-size: 14px;          /* 🟡 reduced font size */
+  margin-top: 15px;
   transition: background 0.3s ease;
 }
 
-.home-button:hover {
+.home-btn:hover {
   background: #1e4fc4;
 }
 
-/* 📱 Responsive layout */
-@media (max-width: 950px) {
+
+/* Responsive */
+@media (max-width: 1100px) {
   .home-container {
-    flex-direction: column;
+    flex-wrap: wrap;   /* stack cards when needed */
+    justify-content: center;
     align-items: center;
+    overflow-y: auto;  /* allow scroll on mobile */
+    padding: 40px 20px;
   }
+
   .home-card {
-    max-width: 600px;
-    width: 100%;
+    width: 90%;
+    max-width: 500px;
   }
+}
+
+body.no-scroll {
+  overflow: hidden;
+  height: 100vh;
 }

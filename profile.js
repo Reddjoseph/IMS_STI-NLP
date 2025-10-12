@@ -42,6 +42,15 @@ const emailEl = document.getElementById("profile-email");
 const roleEl = document.getElementById("profile-role");
 const createdEl = document.getElementById("profile-created");
 
+// ==================== Edit Name Elements ====================
+const editBtn = document.getElementById("edit-name-btn");
+const editModal = document.getElementById("edit-name-modal");
+const saveNameBtn = document.getElementById("save-name-btn");
+const cancelEditBtn = document.getElementById("cancel-edit-btn");
+const editFirst = document.getElementById("edit-first-name");
+const editLast = document.getElementById("edit-last-name");
+const editMsg = document.getElementById("edit-name-msg");
+
 // === Helper: safely load avatar, ensure correct element, and bypass cache ===
 async function loadAvatar(url) {
   console.log("🖼️ Trying to load avatar:", url);
@@ -107,6 +116,59 @@ onAuthStateChanged(auth, async (user) => {
     }
   } catch (err) {
     console.error("Error loading profile:", err);
+  }
+});
+
+// ==================== Edit Name Modal Logic ====================
+editBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    const docSnap = await getDoc(doc(db, "users", user.uid));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      editFirst.value = data.firstName || "";
+      editLast.value = data.lastName || "";
+    }
+    editMsg.textContent = "";
+    editModal.style.display = "block";
+  } catch (err) {
+    console.error("Error loading name:", err);
+  }
+});
+
+cancelEditBtn.addEventListener("click", () => {
+  editModal.style.display = "none";
+});
+
+saveNameBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const newFirst = editFirst.value.trim();
+  const newLast = editLast.value.trim();
+
+  if (!newFirst || !newLast) {
+    editMsg.style.color = "red";
+    editMsg.textContent = "❌ Both fields are required.";
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "users", user.uid), {
+      firstName: newFirst,
+      lastName: newLast
+    });
+
+    // ✅ Update displayed name immediately
+    nameEl.textContent = `${newFirst} ${newLast}`.trim();
+    editMsg.style.color = "green";
+    editMsg.textContent = "✅ Name updated successfully!";
+    setTimeout(() => editModal.style.display = "none", 1200);
+  } catch (err) {
+    editMsg.style.color = "red";
+    editMsg.textContent = "❌ Update failed: " + err.message;
   }
 });
 

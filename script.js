@@ -1,6 +1,7 @@
 // ==================== MAIN SCRIPT ====================
 window.onload = function () {
   console.log("Script loaded and window.onload triggered");
+  document.body.classList.add('firebase-initialized');
   loadPage('home');
 
   // ==================== FIREBASE CONFIGURATION ====================
@@ -20,6 +21,7 @@ window.onload = function () {
 
   // ==================== DOM ELEMENTS ====================
   const loginModal = document.getElementById('login-modal');
+  const sideNav = document.querySelector('.side-nav');
   const loginBtn = document.querySelector('.login-btn');
   const closeLogin = document.getElementById('close-login');
   const toggleRegister = document.getElementById('toggle-register');
@@ -293,108 +295,139 @@ window.onload = function () {
   document.addEventListener("click", () => avatarDropdown.classList.remove("visible"));
 
  // ==================== AUTH STATE CHANGE HANDLER ====================
-  auth.onAuthStateChanged(user => {
-    if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
-    if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+auth.onAuthStateChanged(user => {
+  if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
+  if (notifUnsub) { notifUnsub(); notifUnsub = null; }
 
-    if (user) {
-      avatar.style.display = 'block';
-      loginBtn.style.display = 'none';
-      db.collection('users').doc(user.uid).get()
-        .then(doc => {
-          if (doc.exists) {
-            const role = doc.data().role || 'User';
-            const userRoleDiv = document.getElementById('user-role');
-            userRoleDiv.textContent = user.email;
-            userRoleDiv.style.display = 'block';
+  if (user) {
+    avatar.style.display = 'block';
+    sideNav.classList.add('active');
+    loginBtn.style.display = 'none';
 
-            // Default visibility reset
-            inventoryLink.style.display = 'none';
-            myTicketsLink.style.display = 'none';
-            document.getElementById('rooms-link-a').style.display = 'none';
-            document.getElementById('tasks-link').style.display = 'none';
-            if (notifWrapper) notifWrapper.style.display = 'none';
+    // ✅ Fetch user document for role and avatar
+    db.collection('users').doc(user.uid).get()
+      .then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          const role = data.role || 'User';
+          const userRoleDiv = document.getElementById('user-role');
+          userRoleDiv.textContent = user.email;
+          userRoleDiv.style.display = 'block';
 
-            if (role === 'Admin' || role === 'Maintenance') {
-              if (notifWrapper) notifWrapper.style.display = 'flex';
-
-              const roomsLink = document.getElementById('rooms-link-a');
-              const tasksLink = document.getElementById('tasks-link');
-
-              // Admin access (Inventory + Tickets + Rooms)
-              if (role === 'Admin') {
-                inventoryLink.style.display = 'block';
-                myTicketsLink.style.display = 'block';
-                roomsLink.style.display = 'block';
-                tasksLink.style.display = 'none';
-              }
-
-              // Maintenance access (Tasks only)
-              if (role === 'Maintenance') {
-                roomsLink.style.display = 'none';
-                inventoryLink.style.display = 'none';   // hide inventory
-                myTicketsLink.style.display = 'none';   // hide tickets
-                tasksLink.style.display = 'block';      // show tasks
-              }
-
-              // 🔔 Shared listener for Admin & Maintenance (don't remove!)
-              ticketUnsub = db.collection('tickets')
-                .orderBy('createdAt', 'desc')
-                .limit(20)
-                .onSnapshot(snapshot => renderNotifications(snapshot.docs, true));
-
-            } else if (role === 'User') {
-              // User (Tickets only)
-              inventoryLink.style.display = 'none';
-              myTicketsLink.style.display = 'block';
-              if (notifWrapper) notifWrapper.style.display = 'flex';
-              document.getElementById('rooms-link-a').style.display = 'none';
-
-              notifUnsub = db.collection('notifications')
-                .where("createdByRole", "==", "Admin")
-                .orderBy("createdAt", "desc")
-                .limit(20)
-                .onSnapshot(snapshot => {
-                  renderNotifications(snapshot.docs, false);
-                  if (snapshot.empty) {
-                    const emptyEl = notifDropdown.querySelector(".notif-empty");
-                    if (emptyEl) emptyEl.style.display = "block";
-                    notifList.innerHTML = "";
-                    showNotification(0);
-                  }
-                });
-            } else {
-              inventoryLink.style.display = 'none';
-              myTicketsLink.style.display = 'none';
-              if (notifWrapper) notifWrapper.style.display = 'none';
-              document.getElementById('rooms-link-a').style.display = 'none';
-            }
+          // ✅ Update avatar image from Firestore
+          const avatarImgEl = document.querySelector('#user-avatar img');
+          if (data.avatarURL && avatarImgEl) {
+            avatarImgEl.src = data.avatarURL + '?t=' + Date.now();
+          } else if (avatarImgEl) {
+            avatarImgEl.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
           }
-        })
-        .catch(() => {
+
+          // 👁️ Real-time listener for avatar changes
+          db.collection('users').doc(user.uid).onSnapshot(docSnap => {
+            if (docSnap.exists) {
+              const newAvatarURL = docSnap.data().avatarURL;
+              const avatarImgEl = document.querySelector('#user-avatar img');
+              if (avatarImgEl) {
+                if (newAvatarURL) {
+                  avatarImgEl.src = newAvatarURL + '?t=' + Date.now();
+                } else {
+                  avatarImgEl.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                }
+              }
+            }
+          });
+
+          // ==================== ROLE HANDLING ====================
           inventoryLink.style.display = 'none';
           myTicketsLink.style.display = 'none';
-          if (notifWrapper) notifWrapper.style.display = 'none';
           document.getElementById('rooms-link-a').style.display = 'none';
-        });
-    } else {
-      avatar.style.display = 'none';
-      loginBtn.style.display = 'inline-flex';
-      inventoryLink.style.display = 'none';
-      myTicketsLink.style.display = 'none';
-      document.getElementById('user-role').style.display = 'none';
-      document.getElementById('tasks-link').style.display = 'none';
-      if (notifWrapper) notifWrapper.style.display = 'none';
-      notifList.innerHTML = "";
-      showNotification(0);
-      const emptyEl = notifDropdown.querySelector(".notif-empty");
-      if (emptyEl) emptyEl.style.display = "block";
-      document.getElementById('rooms-link-a').style.display = 'none';
-        const roomsLi = document.getElementById('rooms-link');
-        if (roomsLi) roomsLi.style.display = 'none';
-    }
-  });
+          document.getElementById('tasks-link').style.display = 'none';
+          if (notifWrapper) notifWrapper.style.display = 'none';
 
+          if (role === 'Admin' || role === 'Maintenance') {
+            if (notifWrapper) notifWrapper.style.display = 'flex';
+
+            const roomsLink = document.getElementById('rooms-link-a');
+            const tasksLink = document.getElementById('tasks-link');
+
+            if (role === 'Admin') {
+              inventoryLink.style.display = 'block';
+              myTicketsLink.style.display = 'block';
+              roomsLink.style.display = 'block';
+              tasksLink.style.display = 'none';
+            }
+
+            if (role === 'Maintenance') {
+              roomsLink.style.display = 'none';
+              inventoryLink.style.display = 'none';
+              myTicketsLink.style.display = 'none';
+              tasksLink.style.display = 'block';
+            }
+
+            ticketUnsub = db.collection('tickets')
+              .orderBy('createdAt', 'desc')
+              .limit(20)
+              .onSnapshot(snapshot => renderNotifications(snapshot.docs, true));
+
+          } else if (role === 'User') {
+            inventoryLink.style.display = 'none';
+            myTicketsLink.style.display = 'block';
+            if (notifWrapper) notifWrapper.style.display = 'flex';
+            document.getElementById('rooms-link-a').style.display = 'none';
+
+            notifUnsub = db.collection('notifications')
+              .where("createdByRole", "==", "Admin")
+              .orderBy("createdAt", "desc")
+              .limit(20)
+              .onSnapshot(snapshot => {
+                renderNotifications(snapshot.docs, false);
+                if (snapshot.empty) {
+                  const emptyEl = notifDropdown.querySelector(".notif-empty");
+                  if (emptyEl) emptyEl.style.display = "block";
+                  notifList.innerHTML = "";
+                  showNotification(0);
+                }
+              });
+          } else {
+            inventoryLink.style.display = 'none';
+            myTicketsLink.style.display = 'none';
+            if (notifWrapper) notifWrapper.style.display = 'none';
+            document.getElementById('rooms-link-a').style.display = 'none';
+          }
+        }
+      })
+      .catch(() => {
+        inventoryLink.style.display = 'none';
+        myTicketsLink.style.display = 'none';
+        if (notifWrapper) notifWrapper.style.display = 'none';
+        document.getElementById('rooms-link-a').style.display = 'none';
+      });
+
+  } else {
+    // ==================== LOGGED OUT STATE ====================
+    avatar.style.display = 'none';
+    sideNav.classList.remove('active');
+    loginBtn.style.display = 'inline-flex';
+    inventoryLink.style.display = 'none';
+    myTicketsLink.style.display = 'none';
+    document.getElementById('user-role').style.display = 'none';
+    document.getElementById('tasks-link').style.display = 'none';
+    if (notifWrapper) notifWrapper.style.display = 'none';
+    notifList.innerHTML = "";
+    showNotification(0);
+    const emptyEl = notifDropdown.querySelector(".notif-empty");
+    if (emptyEl) emptyEl.style.display = "block";
+    document.getElementById('rooms-link-a').style.display = 'none';
+    const roomsLi = document.getElementById('rooms-link');
+    if (roomsLi) roomsLi.style.display = 'none';
+
+    // ✅ Reset avatar image on logout
+    const avatarImgEl = document.querySelector('#user-avatar img');
+    if (avatarImgEl) {
+      avatarImgEl.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+    }
+  }
+});
 
   // ==================== NOTIFICATION DROPDOWN ====================
   if (notifBtn) {

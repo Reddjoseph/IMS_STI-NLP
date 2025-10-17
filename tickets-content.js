@@ -214,7 +214,9 @@ function waitForElement(selector, timeout = 2500) {
             }
           </td>
             <td>
-              <span class="status-badge ${statusClass}">
+              <span class="status-badge ${statusClass}" 
+                data-id="${t.id}" 
+                data-status="${t.status}">
                 ${escapeHtml(t.status)}
               </span>
             </td>
@@ -339,6 +341,44 @@ function waitForElement(selector, timeout = 2500) {
             updateReviewStatus(ticketId, "Unsolved");
           };
         }
+      }
+
+      // ✅ Admin can click "Assigned" status to mark as urgent
+      if (currentRole === "Admin") {
+        const statusModal = document.getElementById("statusModal");
+        const closeStatusModal = document.getElementById("closeStatusModal");
+        const markUrgentBtn = document.getElementById("markUrgentBtn");
+
+        ticketsTableBody.querySelectorAll(".status-badge").forEach((badge) => {
+          badge.addEventListener("click", () => {
+            const ticketId = badge.dataset.id;
+            const status = badge.dataset.status;
+            if (status === "Assigned") {
+              statusModal.style.display = "flex";
+              statusModal.dataset.ticketId = ticketId;
+            }
+          });
+        });
+
+        closeStatusModal.addEventListener("click", () => {
+          statusModal.style.display = "none";
+        });
+
+        markUrgentBtn.addEventListener("click", async () => {
+          const ticketId = statusModal.dataset.ticketId;
+          if (!ticketId) return;
+          try {
+            await ticketsCollection.doc(ticketId).update({ status: "Urgent" });
+            alert("🚨 Ticket marked as Urgent!");
+            statusModal.style.display = "none";
+            tickets = await getTickets();
+            filteredTickets = [...tickets];
+            renderTickets();
+          } catch (err) {
+            console.error("Failed to mark urgent:", err);
+            alert("Failed to update status.");
+          }
+        });
       }
 
       // ✅ Delete buttons

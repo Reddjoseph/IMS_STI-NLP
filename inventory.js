@@ -134,7 +134,10 @@ async function fetchInventory() {
                target="_blank" style="color:#000;text-decoration:none;">
               ${item.Name || "Unnamed"}</a></td>
         <td>${item.Laboratory || "Unknown"}</td>
-        <td>${parseStoredDateToLocal(item["Date added"])}</td>
+        <td class="date-added-cell" style="color:#2563eb;cursor:pointer;text-decoration:underline;">
+          ${parseStoredDateToLocal(item["Date added"])}
+        </td>
+        
         <td><span class="condition-badge condition-${(item.Condition || "unknown").toLowerCase().replace(/\s/g,"-")}">
               ${item.Condition || "Unknown"}</span></td>
         <td class="actions-cell">
@@ -144,6 +147,11 @@ async function fetchInventory() {
         </td>
       `;
       tbody.appendChild(tr);
+      // 📅 Make Date Added clickable
+      tr.querySelector(".date-added-cell").addEventListener("click", () => {
+        openDateAddedModal(item.id, item["Date added"]);
+      });
+
 
       // Wire up buttons
       tr.querySelector(".edit-btn").addEventListener("click", () => showEditItemForm(item.id, item));
@@ -167,6 +175,39 @@ async function fetchInventory() {
   }
 }
 
+/* -------------------------
+   🆕 Date Added Modal Logic
+------------------------- */
+const dateAddedModal = document.getElementById("dateAddedModal");
+const dateAddedDescription = document.getElementById("dateAddedDescription");
+const closeDateAddedModal = document.getElementById("closeDateAddedModal");
+const requestMaintenanceBtn = document.getElementById("requestMaintenanceBtn");
+
+function openDateAddedModal(itemId, dateStr) {
+  dateAddedDescription.textContent = `This item was added on ${parseStoredDateToLocal(dateStr)}.`;
+  dateAddedModal.style.display = "flex";
+
+  requestMaintenanceBtn.onclick = async () => {
+    if (confirm("Mark this item as URGENT for maintenance?")) {
+      try {
+        const itemRef = doc(db, "inventory", itemId);
+        await updateDoc(itemRef, {
+          MaintenanceDueDate: "URGENT"
+        });
+        alert("✅ Maintenance request sent! Item marked as URGENT.");
+        dateAddedModal.style.display = "none";
+        fetchInventory();
+      } catch (err) {
+        console.error(err);
+        alert("❌ Failed to mark as URGENT.");
+      }
+    }
+  };
+}
+
+closeDateAddedModal.addEventListener("click", () => {
+  dateAddedModal.style.display = "none";
+});
 
 /* -------------------------
    Items Chart

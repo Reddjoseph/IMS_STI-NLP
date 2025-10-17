@@ -239,6 +239,26 @@
   color: #fff;
   white-space: nowrap;
 }
+.tracking-badge-urgent {
+  background-color: #dc2626; /* red */
+  color: #fff;
+  font-weight: bold;
+  animation: pulse 1s infinite alternate;
+}
+.status-badge.urgent {
+  background-color: #dc2626; 
+  color: #fff;
+  font-weight: bold;
+  animation: pulse 1s infinite alternate;
+}
+@keyframes pulse {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.05); opacity: 0.8; }
+}
+@keyframes pulse {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.05); opacity: 0.8; }
+}
 
 .tracking-badge-green {
   background-color: #16a34a; /* green */

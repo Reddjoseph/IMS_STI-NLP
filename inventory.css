@@ -712,6 +712,39 @@ button.qr-btn {
 }
 
 /* ===========================
+   Dead Added Modal
+   =========================== */
+#dateAddedModal .modal {
+  text-align: center;
+}
+#dateAddedDescription {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #333;
+}
+/* ===========================
+   Automate Button
+   =========================== */
+#automate-btn {
+  color: #2D3E50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+#automate-btn:hover i {
+  transform: scale(1.2);
+  color: #2563eb;
+}
+
+/* ===========================
    Custom Scrollbar Styling
    =========================== */
 .inventory-table-wrapper::-webkit-scrollbar,
@@ -719,20 +752,17 @@ button.qr-btn {
   width: 10px;   
   height: 10px;  
 }
-
 .inventory-table-wrapper::-webkit-scrollbar-track,
 #latest-items-list::-webkit-scrollbar-track {
   background: #e5e7eb;  /* light gray track */
   border-radius: 6px;
 }
-
 .inventory-table-wrapper::-webkit-scrollbar-thumb,
 #latest-items-list::-webkit-scrollbar-thumb {
   background-color: #2D3E50; 
   border-radius: 6px;
   border: 2px solid #e5e7eb; 
 }
-
 .inventory-table-wrapper::-webkit-scrollbar-thumb:hover,
 #latest-items-list::-webkit-scrollbar-thumb:hover {
   background-color: #3a4f65; 

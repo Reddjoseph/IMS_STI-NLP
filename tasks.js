@@ -118,9 +118,19 @@
 
         snapshot.forEach((doc) => {
           const t = doc.data();
-          const deadline = t.deadline
-            ? new Date(t.deadline).toLocaleDateString()
-            : "Not set";
+          let deadline = "Not set";
+          if (t.deadline) {
+            try {
+              if (t.deadline.toDate && typeof t.deadline.toDate === "function") {
+                deadline = t.deadline.toDate().toLocaleDateString();
+              } else if (typeof t.deadline === "string" && !isNaN(Date.parse(t.deadline))) {
+                deadline = new Date(t.deadline).toLocaleDateString();
+              }
+            } catch (err) {
+              console.warn("Invalid deadline format:", t.deadline);
+              deadline = "Invalid";
+            }
+          }
           const note = t.assignmentNote || t.note || null;
           const description = t.description || "—";
           const status = (t.status || "Pending").trim();
@@ -143,6 +153,9 @@
             badgeClass = "status-badge completed";
           else if (normalizedStatus.includes("closed"))
             badgeClass = "status-badge closed";
+          else if (normalizedStatus.includes("urgent"))
+            badgeClass = "status-badge urgent";
+
 
           const canSubmit =
             !["review", "solved", "unsolved"].includes(normalizedStatus);
@@ -211,7 +224,7 @@
       });
 
 // =============================
-// 🧰 Maintenance Due Dates Table
+// 🧰 Maintenance Due Dates Table (Fixed for URGENT)
 // =============================
 async function loadMaintenanceTable() {
   const tableBody = document.getElementById("maintenanceTableBody");
@@ -222,7 +235,6 @@ async function loadMaintenanceTable() {
     let items = snapshot.docs.map((doc) => {
       const data = doc.data();
 
-      // Case-insensitive field lookup
       const name =
         data.Name ||
         data.name ||
@@ -237,19 +249,26 @@ async function loadMaintenanceTable() {
         data.DueDate;
 
       let due = null;
+      let isUrgent = false;
 
-      // Handle both Firestore Timestamp and string dates
-      if (dueRaw?.toDate && typeof dueRaw.toDate === "function") {
+      // ✅ Handle URGENT and Date values
+      if (typeof dueRaw === "string") {
+        if (dueRaw.toUpperCase() === "URGENT") {
+          isUrgent = true;
+        } else if (!isNaN(Date.parse(dueRaw))) {
+          due = new Date(dueRaw);
+        }
+      } else if (dueRaw?.toDate && typeof dueRaw.toDate === "function") {
         due = dueRaw.toDate();
-      } else if (typeof dueRaw === "string" && !isNaN(Date.parse(dueRaw))) {
-        due = new Date(dueRaw);
       }
 
-      return { name, dueDate: due };
+      return { name, dueDate: due, isUrgent };
     });
 
-    // Sort items: earliest due date first, then those with N/A last
+    // Sort: URGENTs first, then earliest due date, then N/A
     items.sort((a, b) => {
+      if (a.isUrgent && !b.isUrgent) return -1;
+      if (!a.isUrgent && b.isUrgent) return 1;
       if (!a.dueDate && !b.dueDate) return 0;
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
@@ -262,13 +281,24 @@ async function loadMaintenanceTable() {
     tableBody.innerHTML = items.length
       ? items
           .map((item) => {
+            // 🚨 If marked URGENT
+            if (item.isUrgent) {
+              return `
+                <tr class="urgent-row">
+                  <td>${item.name}</td>
+                  <td>—</td>
+                  <td><span class="tracking-badge tracking-badge-urgent">🚨 URGENT</span></td>
+                </tr>`;
+            }
+
+            // ⏰ Normal dates
             if (!item.dueDate) {
               return `
-              <tr>
-                <td>${item.name}</td>
-                <td>N/A</td>
-                <td><span class="tracking-badge tracking-badge-gray">N/A</span></td>
-              </tr>`;
+                <tr>
+                  <td>${item.name}</td>
+                  <td>N/A</td>
+                  <td><span class="tracking-badge tracking-badge-gray">N/A</span></td>
+                </tr>`;
             }
 
             const diffDays = Math.ceil(
@@ -292,7 +322,6 @@ async function loadMaintenanceTable() {
     console.error("Error loading maintenance due dates:", err);
   }
 }
-
 
     await loadMaintenanceTable();
   } catch (err) {

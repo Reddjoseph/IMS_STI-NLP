@@ -662,6 +662,10 @@ button.qr-btn {
   background-color: rgba(147, 51, 234, .70); /* Purple */
 }
 
+.condition-new {
+  background-color: rgba(121, 217, 255, 0.7); /* Purple */
+}
+
 .condition-unknown {
   background-color: rgb(255, 255, 255); /* Neutral gray */
 }
@@ -723,26 +727,6 @@ button.qr-btn {
   font-size: 0.95rem;
   color: #333;
 }
-/* ===========================
-   Automate Button
-   =========================== */
-#automate-btn {
-  color: #2D3E50;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  font-size: 20px;
-  transition: transform 0.3s ease;
-}
-#automate-btn:hover i {
-  transform: scale(1.2);
-  color: #2563eb;
-}
 
 /* ===========================
    Custom Scrollbar Styling
@@ -767,6 +751,70 @@ button.qr-btn {
 #latest-items-list::-webkit-scrollbar-thumb:hover {
   background-color: #3a4f65; 
 }
+
+/* ===========================
+   Automate Modal Content
+   =========================== */
+.close-automate-btn {
+  background-color: #2D3E50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.close-automate-btn:hover {
+  background-color: #1e293b;
+  transform: scale(1.05);
+}
+
+.close-automate-btn:active {
+  transform: scale(0.97);
+}
+
+#cursor {
+  display: inline-block;
+  opacity: 1;
+}
+
+#cursor.blink {
+  animation: blink-caret 0.8s steps(1) infinite;
+}
+
+@keyframes blink-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+#automate-summary-text u {
+  text-decoration: underline;
+}
+
+#automate-summary-text strong {
+  font-weight: 700;
+}
+
+.inventory-table a {
+  color: #007bff !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+}
+.inventory-table a:hover {
+  color: #0056b3 !important;
+}
+
+.clickable-item {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.clickable-item:hover { color: #0056b3; }
+
 
 /* Firefox support */
 .inventory-table-wrapper,

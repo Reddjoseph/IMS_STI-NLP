@@ -1,4 +1,4 @@
-// ✅ tickets-content.js (Admin: Review Modal + Clickable Handler + Deadline Modal + Full Feature)
+//  tickets-content.js (Admin: Review Modal + Clickable Handler + Deadline Modal + Full Feature)
 
 function waitForElement(selector, timeout = 2500) {
   return new Promise((resolve, reject) => {
@@ -161,6 +161,11 @@ function waitForElement(selector, timeout = 2500) {
 
       pageTickets.forEach((t, index) => {
         const tr = document.createElement("tr");
+
+        //  Store the createdAt timestamp as a dataset for Automate feature
+        const createdAtValue = t.createdAt?.toDate ? t.createdAt.toDate().toISOString() : "";
+        tr.dataset.createdAt = createdAtValue;
+
         const statusClass = "status-" + (t.status || "pending").toLowerCase();
         const desc = t.description || "";
         const showButton = desc.length > 80;
@@ -168,7 +173,6 @@ function waitForElement(selector, timeout = 2500) {
         let assignColumn = "";
         if (currentRole === "Admin") {
           if (t.status === "Review" && t.assignedToName) {
-            // 🔹 Clickable name for Review status
             assignColumn = `
               <td>
                 <span class="handler-clickable" data-id="${t.id}" data-user="${t.assignedToName}">
@@ -176,13 +180,11 @@ function waitForElement(selector, timeout = 2500) {
                 </span>
               </td>`;
           } else if (t.status === "Solved" && t.assignedToName) {
-            // ✅ Show maintenance name (non-editable) when ticket is solved
             assignColumn = `
               <td>
                 <span class="handler-name">${t.assignedToName}</span>
               </td>`;
           } else {
-            // 🔸 Normal dropdown for assignment
             const assignedTo = t.assignedToName || "Unassigned";
             assignColumn = `
               <td>
@@ -213,14 +215,13 @@ function waitForElement(selector, timeout = 2500) {
                 : ""
             }
           </td>
-            <td>
-              <span class="status-badge ${statusClass}" 
-                data-id="${t.id}" 
-                data-status="${t.status}">
-                ${escapeHtml(t.status)}
-              </span>
-            </td>
-
+          <td>
+            <span class="status-badge ${statusClass}" 
+              data-id="${t.id}" 
+              data-status="${t.status}">
+              ${escapeHtml(t.status)}
+            </span>
+          </td>
           <td><button class="btn-delete" data-index="${index}" title="Delete Ticket">Delete</button></td>
           ${
             currentRole === "Admin"
@@ -232,7 +233,7 @@ function waitForElement(selector, timeout = 2500) {
         ticketsTableBody.appendChild(tr);
       });
 
-      // ✅ Admin handler modal logic
+      //  Admin handler modal logic
       if (currentRole === "Admin") {
         // --- Handler select for new assignment ---
         ticketsTableBody.querySelectorAll(".assign-select").forEach(select => {
@@ -343,7 +344,7 @@ function waitForElement(selector, timeout = 2500) {
         }
       }
 
-      // ✅ Admin can click "Assigned" status to mark as urgent
+      //  Admin can click "Assigned" status to mark as urgent
       if (currentRole === "Admin") {
         const statusModal = document.getElementById("statusModal");
         const closeStatusModal = document.getElementById("closeStatusModal");
@@ -381,14 +382,14 @@ function waitForElement(selector, timeout = 2500) {
         });
       }
 
-      // ✅ Delete buttons
+      //  Delete buttons
       ticketsTableBody.querySelectorAll(".btn-delete").forEach((btn, idx) => {
         btn.addEventListener("click", () =>
           onDeleteTicket((currentPage - 1) * pageSize + idx)
         );
       });
 
-      // ✅ Feedback buttons
+      //  Feedback buttons
       if (currentRole !== "Admin") {
         ticketsTableBody.querySelectorAll(".btn-feedback").forEach((btn) => {
           btn.addEventListener("click", async () => {
@@ -409,7 +410,7 @@ function waitForElement(selector, timeout = 2500) {
         });
       }
 
-      // ✅ Description buttons
+      //  Description buttons
       ticketsTableBody.querySelectorAll(".btn-view-description").forEach((btn) => {
         btn.addEventListener("click", () => {
           const desc = btn.dataset.desc || "No description available.";
@@ -557,6 +558,397 @@ function waitForElement(selector, timeout = 2500) {
   }
 })();
 
+// ==================================================
+// =                    AUTOMATE                    =
+// ============================= ====================
+window.showTicketsAutomateModal = function () {
+  const existing = document.getElementById('tickets-automate-overlay');
+  if (existing) existing.remove();
+
+  const tableBody = document.getElementById('tc-ticketsTableBody');
+  if (!tableBody) {
+    alert('No ticket data found.');
+    return;
+  }
+
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+  const total = rows.length;
+  let pending = 0, assigned = 0, urgent = 0, solved = 0, unsolved = 0, review = 0;
+
+  rows.forEach(row => {
+    const badge = row.querySelector('.status-badge');
+    if (!badge) return;
+    const s = badge.textContent.trim().toLowerCase();
+    if (s.includes('pending')) pending++;
+    else if (s.includes('assigned')) assigned++;
+    else if (s.includes('urgent')) urgent++;
+    else if (s.includes('solved')) solved++;
+    else if (s.includes('unsolved')) unsolved++;
+    else if (s.includes('review')) review++;
+  });
+
+  const summaryHTML = `
+    As of this moment, there are a total of <strong>${total}</strong> <u>tickets</u> currently listed in the system. 
+    Out of these, <strong>${pending}</strong> are still <u>pending</u>, 
+    <strong>${assigned}</strong> have been <u>assigned</u>, 
+    and <strong>${urgent}</strong> are flagged as <u>urgent</u>. 
+    Meanwhile, <strong>${solved}</strong> have already been <u>resolved</u>, 
+    <strong>${unsolved}</strong> remain <u>unsolved</u>, and 
+    <strong>${review}</strong> are currently under <u>review</u>. 
+    This provides administrators with a clear snapshot of the current ticket distribution and workload.
+  `.replace(/\s+/g, ' ').trim();
+
+  // create modal overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'tickets-automate-overlay';
+  overlay.className = 'tc-modal';
+  overlay.style.display = 'flex';
+
+  const content = document.createElement('div');
+  content.className = 'tc-modal__content';
+  content.innerHTML = `
+    <h3 style="text-align:center; font-weight:600;">🤖 Automated Tickets Summary</h3>
+    <div id="tickets-automate-text" style="font-size:15px; line-height:1.6; text-align:justify; color:#111;"></div>
+    <div id="tickets-qa-container" style="margin-top:15px; font-size:15px; line-height:1.6; text-align:justify;"></div>
+    <div id="tickets-automate-qa" style="margin-top:20px; display:none;">
+      <input id="tickets-qa-input" type="text" placeholder="Ask something..." 
+        style="padding:8px; width:70%; border-radius:6px; border:1px solid #ccc; font-size:0.9rem;">
+      <button id="tickets-qa-btn" class="ask-btn">
+        <span class="btn-text">Ask</span>
+        <span class="spinner" style="display:none;"></span>
+      </button>
+    </div>
+    <div style="text-align:center; margin-top:20px;">
+      <button id="close-tickets-automate-btn" class="close-automate-btn">Close</button>
+    </div>
+  `;
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  // helper: try to extract createdAt string from a row (many fallbacks)
+  function extractCreatedAtFromRow(row) {
+    if (row.dataset && row.dataset.createdAt) return row.dataset.createdAt;
+
+    const byData = row.querySelector('[data-createdat], [data-created-at]');
+    if (byData) {
+      return byData.dataset.createdat || byData.dataset['createdAt'] || byData.dataset['created-at'] || byData.textContent.trim();
+    }
+
+    const byClass = row.querySelector('.created-at');
+    if (byClass) return byClass.textContent.trim();
+
+    const text = row.textContent || '';
+    const isoMatch = text.match(/\d{4}-\d{2}-\d{2}T?\d{0,2}:?\d{0,2}:?\d{0,2}Z?/);
+    if (isoMatch) return isoMatch[0];
+
+    const readableMatch = text.match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:,\s*\d{4})?/i);
+    if (readableMatch) return readableMatch[0];
+
+    const slashMatch = text.match(/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/);
+    if (slashMatch) return slashMatch[0];
+
+    return null;
+  }
+
+  function parseMaybeDate(str) {
+    if (!str) return null;
+    try {
+      const d = new Date(str);
+      if (isNaN(d)) return null;
+      return d;
+    } catch {
+      return null;
+    }
+  }
+
+  function typeText(element, htmlText, speed = 22, onComplete) {
+    document.querySelectorAll('.typing-cursor').forEach(c => c.remove());
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    cursor.textContent = '|';
+    cursor.style.display = 'inline-block';
+    cursor.style.marginLeft = '3px';
+    cursor.style.color = '#111';
+    element.appendChild(cursor);
+
+    function typeStep() {
+      if (i >= htmlText.length) {
+        cursor.classList.add('blink-tickets');
+        if (onComplete) onComplete();
+        return;
+      }
+      i++;
+      const upto = (() => {
+        const partial = htmlText.slice(0, i);
+        const lastOpen = partial.lastIndexOf('<');
+        const lastClose = partial.lastIndexOf('>');
+        if (lastOpen > lastClose) {
+          const nextClose = htmlText.indexOf('>', i);
+          return nextClose === -1 ? htmlText.length : nextClose + 1;
+        }
+        return i;
+      })();
+      element.innerHTML = htmlText.substring(0, upto);
+      element.appendChild(cursor);
+      i = upto;
+      setTimeout(typeStep, speed);
+    }
+    typeStep();
+  }
+
+  // type summary
+  const textEl = document.getElementById('tickets-automate-text');
+  typeText(textEl, summaryHTML, 22, () => {
+    document.getElementById('tickets-automate-qa').style.display = 'block';
+  });
+
+  // Q&A handler
+  document.getElementById('tickets-qa-btn').addEventListener('click', () => {
+    const inputEl = document.getElementById('tickets-qa-input');
+    const btnEl = document.getElementById('tickets-qa-btn');
+    const spinner = btnEl.querySelector('.spinner');
+    const btnText = btnEl.querySelector('.btn-text');
+
+    const question = inputEl.value.trim();
+    if (!question) return;
+
+    // disable while processing
+    inputEl.disabled = true;
+    btnEl.disabled = true;
+    spinner.style.display = 'inline-block';
+    btnText.style.display = 'none';
+
+    const qaContainer = document.getElementById('tickets-qa-container');
+
+    // append question block
+    const qBlock = document.createElement('div');
+    qBlock.style.marginTop = '15px';
+    qBlock.innerHTML = `<strong>Q:</strong> ${escapeHtml(question)}`;
+    qaContainer.appendChild(qBlock);
+
+    // prepare answer block
+    const aBlock = document.createElement('div');
+    aBlock.style.marginTop = '5px';
+    aBlock.style.fontSize = '15px';
+    aBlock.style.lineHeight = '1.6';
+    qaContainer.appendChild(aBlock);
+
+    let answerText = `<em>Please ask questions related to this page only like "most recently created tickets", "oldest ticket", or "most reported ticket" information.</em>`;
+    const qLower = question.toLowerCase();
+
+    //  1. Most reported item
+    if (qLower.includes('most') && qLower.includes('report')) {
+      const counts = {};
+      const itemReports = {};
+
+      rows.forEach(row => {
+        const itemCell = row.cells[1];
+        const itemName = itemCell ? itemCell.textContent.trim() : null;
+        if (!itemName) return;
+        counts[itemName] = (counts[itemName] || 0) + 1;
+        if (!itemReports[itemName]) itemReports[itemName] = [];
+        itemReports[itemName].push(row);
+      });
+
+      let maxItem = null;
+      let maxCount = 0;
+      for (const [name, count] of Object.entries(counts)) {
+        if (count > maxCount) {
+          maxItem = name;
+          maxCount = count;
+        }
+      }
+
+      if (maxItem) {
+        const reportRows = itemReports[maxItem];
+        const rowsWithDates = reportRows.map(r => {
+          const raw = extractCreatedAtFromRow(r);
+          return { row: r, rawDateStr: raw, parsed: parseMaybeDate(raw) };
+        });
+        const withParsed = rowsWithDates.filter(e => e.parsed);
+        let latestEntry;
+        if (withParsed.length) {
+          withParsed.sort((a, b) => b.parsed - a.parsed);
+          latestEntry = withParsed[0];
+        } else {
+          const lastRow = reportRows[reportRows.length - 1];
+          latestEntry = { row: lastRow, rawDateStr: extractCreatedAtFromRow(lastRow), parsed: null };
+        }
+
+        const latestRow = latestEntry.row;
+        const descEl = latestRow.querySelector('.ticket-description');
+        const latestDesc = descEl ? descEl.textContent.trim() : (latestRow.cells[2] ? latestRow.cells[2].textContent.trim() : 'No description available');
+        const idCell = latestRow.cells[0];
+        const itemId = idCell ? idCell.textContent.trim() : 'N/A';
+        const latestDateStr = latestEntry.parsed ? latestEntry.parsed.toLocaleString() : (latestEntry.rawDateStr || 'date unavailable');
+
+        answerText = `
+          The current item with the most reports is
+          <strong>${escapeHtml(maxItem)}</strong> (ID: <u>${escapeHtml(itemId)}</u>),
+          with <strong>${maxCount}</strong> reports.
+          The most recent report describes: "<em>${escapeHtml(latestDesc)}</em>",
+          which was issued last on <strong>${escapeHtml(String(latestDateStr))}</strong>.
+        `.replace(/\s+/g, ' ').trim();
+      } else {
+        answerText = `<em>No item reports found.</em>`;
+      }
+    }
+
+    //  2. Most recently created ticket
+    else if (qLower.includes('most') && qLower.includes('recent')) {
+      const rowsWithDates = rows
+        .map(r => ({
+          row: r,
+          parsed: parseMaybeDate(extractCreatedAtFromRow(r))
+        }))
+        .filter(e => e.parsed);
+
+      if (rowsWithDates.length > 0) {
+        rowsWithDates.sort((a, b) => b.parsed - a.parsed);
+        const newest = rowsWithDates[0].row;
+        const dateStr = rowsWithDates[0].parsed.toLocaleString();
+        const id = newest.cells[0]?.textContent.trim() || 'N/A';
+        const item = newest.cells[1]?.textContent.trim() || 'N/A';
+        const status = newest.querySelector('.status-badge')?.textContent.trim() || 'N/A';
+
+        answerText = `
+          The most recently created ticket is
+          <strong>ID: <u>${escapeHtml(id)}</u></strong> for
+          <strong>${escapeHtml(item)}</strong>,
+          issued on <strong>${escapeHtml(dateStr)}</strong>.
+          Its current status is <strong>${escapeHtml(status)}</strong>.
+        `.replace(/\s+/g, ' ').trim();
+      } else {
+        answerText = `<em>No valid ticket creation dates found.</em>`;
+      }
+    }
+
+    //  3. Oldest ticket
+    else if (qLower.includes('oldest')) {
+      const rowsWithDates = rows
+        .map(r => ({
+          row: r,
+          parsed: parseMaybeDate(extractCreatedAtFromRow(r))
+        }))
+        .filter(e => e.parsed);
+
+      if (rowsWithDates.length > 0) {
+        rowsWithDates.sort((a, b) => a.parsed - b.parsed);
+        const oldest = rowsWithDates[0].row;
+        const dateStr = rowsWithDates[0].parsed.toLocaleString();
+        const id = oldest.cells[0]?.textContent.trim() || 'N/A';
+        const item = oldest.cells[1]?.textContent.trim() || 'N/A';
+        const status = oldest.querySelector('.status-badge')?.textContent.trim() || 'N/A';
+
+        answerText = `
+          The oldest ticket is
+          <strong>ID: <u>${escapeHtml(id)}</u></strong> for
+          <strong>${escapeHtml(item)}</strong>,
+          issued on <strong>${escapeHtml(dateStr)}</strong>.
+          Its current status is <strong>${escapeHtml(status)}</strong>.
+        `.replace(/\s+/g, ' ').trim();
+      } else {
+        answerText = `<em>No valid ticket creation dates found.</em>`;
+      }
+    }
+
+    typeText(aBlock, `<strong>A:</strong> ${answerText}`, 20, () => {
+      inputEl.disabled = false;
+      btnEl.disabled = false;
+      spinner.style.display = 'none';
+      btnText.style.display = 'inline';
+      inputEl.value = '';
+      inputEl.focus();
+    });
+
+    setTimeout(() => {
+      aBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 600);
+  });
+
+  // ==================== Styles ====================
+  if (!document.getElementById('tickets-automate-blink-style')) {
+    const s = document.createElement('style');
+    s.id = 'tickets-automate-blink-style';
+    s.innerHTML = `
+      @keyframes blink-caret { 50% { opacity: 0; } }
+      .blink-tickets { animation: blink-caret 0.8s steps(1) infinite; }
+
+      .close-automate-btn {
+        background-color: #2D3E50;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.15s ease, background-color 0.2s ease;
+      }
+      .close-automate-btn:hover { 
+        transform: scale(1.05);
+        background-color: #3a506b;
+      }
+
+      .ask-btn {
+        background-color: #2D3E50;    /* 🔹 Same as close button */
+        color: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 600;
+        transition: transform 0.15s ease, background-color 0.2s ease;
+      }
+      .ask-btn:hover {
+        transform: scale(1.05);
+        background-color: #3a506b;   /* 🔹 Same hover color */
+      }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // ==================== Close ====================
+  document.getElementById('close-tickets-automate-btn').addEventListener('click', () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+  });
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+      document.body.style.overflow = '';
+    }
+  });
+
+  document.body.style.overflow = 'hidden';
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+};
+
+// ==================== FAQS HANDLER ====================
 document.querySelectorAll(".faq-question").forEach((btn) => {
   btn.addEventListener("click", () => {
     const item = btn.closest(".faq-item");

@@ -227,6 +227,45 @@
   font-weight: 600;
 }
 
+/* ============================ */
+/* Finish Modal
+/* ============================ */
+.clickable-item {
+  color: #2563eb;              
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;  
+  transition: all 0.2s ease;
+}
+
+.clickable-item:hover {
+  color: #1e3a8a;             
+  text-shadow: 0 0 6px rgba(37, 99, 235, 0.4); 
+  transform: scale(1.05);   
+}
+
+#itemInfoModal .tc-modal__content {
+  max-width: 420px;         
+  padding: 18px 22px;  
+  font-size: 0.9rem;        
+  line-height: 1.4;
+}
+#itemInfoModal h3 {
+  font-size: 1.1rem;       
+  margin-bottom: 10px;
+  color: #1f2937;          
+}
+#itemInfoDetails p {
+  margin: 4px 0;           
+  font-size: 0.88rem;
+  color: #333;
+}
+#finishMaintenanceBtn {
+  margin-top: 10px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
 /* ============================
    TRACKING BADGES
    ============================ */
@@ -251,6 +290,14 @@
   font-weight: bold;
   animation: pulse 1s infinite alternate;
 }
+
+.disabled-btn {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #ccc !important;
+  transition: 0.3s;
+}
+
 @keyframes pulse {
   from { transform: scale(1); opacity: 1; }
   to { transform: scale(1.05); opacity: 0.8; }

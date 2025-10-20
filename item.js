@@ -1,28 +1,28 @@
-// ✅ item.js (with Firebase Storage, Feedback History, Working Image Display + Condition Badge Styling)
+// item.js (with Firebase Storage, Feedback History, Working Image Display + Condition Badge Styling)
 
 const firebaseConfig = {
   apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
   authDomain: "fir-inventory-2e62a.firebaseapp.com",
   projectId: "fir-inventory-2e62a",
-  storageBucket: "fir-inventory-2e62a.appspot.com", // ✅ must end with .appspot.com
+  storageBucket: "fir-inventory-2e62a.appspot.com", 
   messagingSenderId: "380849220480",
   appId: "1:380849220480:web:5a43b227bab9f9a197af65",
   measurementId: "G-ERT87GL4XC"
 };
 
-// ✅ Initialize Firebase
+// Initialize Firebase
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 const storageRef = storage.ref();
 
-// ✅ Get item ID from URL
+// Get item ID from URL
 const params = new URLSearchParams(window.location.search);
 const itemId = params.get("id");
 let itemName = "";
 let activeFeedbackTicketId = null;
 
-// ✅ Load item details
+// Load item details
 async function loadItemDetails() {
   try {
     const doc = await db.collection("inventory").doc(itemId).get();
@@ -38,7 +38,7 @@ async function loadItemDetails() {
     document.getElementById("item-name").textContent = itemName;
     document.getElementById("item-lab").textContent = data.Laboratory || "N/A";
 
-    // ✅ Styled condition badge
+    // Styled condition badge
     const conditionEl = document.getElementById("item-condition");
     const rawCondition = (data.Condition || "Unknown").toString();
     conditionEl.textContent = rawCondition;
@@ -53,7 +53,7 @@ async function loadItemDetails() {
 
     document.getElementById("item-date").textContent = data["Date added"] || "N/A";
 
-    // ✅ Load and display item image (supports both full URLs and Firebase paths)
+    // Load and display item image (supports both full URLs and Firebase paths)
     const imgEl = document.getElementById("item-image");
     const placeholder = "https://placehold.co/350x250?text=No+Image+Available&font=roboto";
 
@@ -80,7 +80,7 @@ async function loadItemDetails() {
       imgEl.src = placeholder;
     }
 
-    // ✅ Optional: click to view larger
+    // Optional: click to view larger
     imgEl.style.cursor = "pointer";
     imgEl.addEventListener("click", () => {
       window.open(imgEl.src, "_blank");
@@ -92,7 +92,7 @@ async function loadItemDetails() {
   }
 }
 
-// ✅ Load item reports
+// Load item reports
 async function loadItemReports() {
   const reportsBody = document.getElementById("item-reports-body");
   reportsBody.innerHTML = "";
@@ -136,7 +136,7 @@ async function loadItemReports() {
   attachListeners();
 }
 
-// ✅ Attach UI listeners
+// Attach UI listeners
 function attachListeners() {
   // Editable description
   document.querySelectorAll(".editable-description").forEach((input) => {
@@ -166,7 +166,7 @@ function attachListeners() {
     });
   });
 
-  // ✅ Feedback button
+  // Feedback button
   document.querySelectorAll(".feedback-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       activeFeedbackTicketId = e.target.dataset.id;
@@ -182,7 +182,7 @@ function attachListeners() {
   });
 }
 
-// ✅ Save feedback
+// Save feedback
 document.getElementById("submitFeedbackBtn").addEventListener("click", async () => {
   const text = document.getElementById("feedbackText").value.trim();
   const admin = document.getElementById("adminName").value.trim();
@@ -226,14 +226,14 @@ document.getElementById("submitFeedbackBtn").addEventListener("click", async () 
   }
 });
 
-// ✅ Close modal
+// Close modal
 document.getElementById("closeFeedbackModal").addEventListener("click", () => {
   const modal = document.getElementById("feedbackModal");
   modal.style.display = "none";
   modal.setAttribute("aria-hidden", "true");
 });
 
-// ✅ Render feedback timeline
+// Render feedback timeline
 function renderFeedbackHistory(history) {
   const container = document.getElementById("feedbackHistory");
   if (!history.length) {
@@ -255,7 +255,7 @@ function renderFeedbackHistory(history) {
     .join("");
 }
 
-// ✅ Escape HTML utility
+// Escape HTML utility
 function escapeHtml(s = "") {
   return String(s)
     .replaceAll("&", "&amp;")

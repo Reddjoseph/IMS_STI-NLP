@@ -1,5 +1,5 @@
 /* ============================ */
-/* 🎟️ TICKETS PAGE MAIN STYLES */
+/*   TICKETS PAGE MAIN STYLES */
 /* ============================ */
 body {
   margin: 0;
@@ -10,7 +10,7 @@ body {
 }
 
 /* ============================ */
-/* 🧱 WRAPPER */
+/*   WRAPPER */
 /* ============================ */
 .tickets-wrapper {
   max-width: 1000px;
@@ -22,7 +22,7 @@ body {
 }
 
 /* ============================ */
-/* 🔍 SEARCH BAR */
+/*   SEARCH BAR */
 /* ============================ */
 .tickets-search {
   display: flex;
@@ -43,7 +43,7 @@ body {
 }
 
 /* ============================ */
-/* 📊 TABLE STYLING */
+/*   TABLE STYLING */
 /* ============================ */
 .tickets-table {
   width: 100%;
@@ -85,7 +85,7 @@ body {
 }
 
 /* ============================ */
-/* 📏 COLUMN ALIGNMENT */
+/*   COLUMN ALIGNMENT */
 /* ============================ */
 .tickets-table th:nth-last-child(3),
 .tickets-table td:nth-last-child(3),
@@ -103,7 +103,7 @@ body {
 }
 
 /* ============================ */
-/* 🔢 PAGINATION CONTROLS */
+/*   PAGINATION CONTROLS */
 /* ============================ */
 .tickets-pagination {
   display: flex;
@@ -132,7 +132,7 @@ body {
 }
 
 /* ============================ */
-/* 🧰 BUTTONS */
+/*   BUTTONS */
 /* ============================ */
 .btn-primary {
   display: inline-flex;
@@ -205,7 +205,7 @@ body {
 }
 
 /* ============================ */
-/* 🪟 MODALS */
+/*   MODALS */
 /* ============================ */
 .tc-modal {
   display: none;
@@ -245,7 +245,7 @@ body {
 }
 
 /* ============================ */
-/* 📝 MODAL INPUTS */
+/*   MODAL INPUTS */
 /* ============================ */
 .tc-modal label {
   display: block;
@@ -269,7 +269,7 @@ body {
 }
 
 /* ============================ */
-/* 💬 FEEDBACK MODAL */
+/*   FEEDBACK MODAL */
 /* ============================ */
 #viewFeedbackModal .tc-modal__content {
   max-width: 400px;
@@ -328,7 +328,7 @@ body {
 }
 
 /* ============================ */
-/* ❓ FAQ */
+/*   FAQ */
 /* ============================ */
 .tickets-faq {
   margin-top: 30px;
@@ -394,7 +394,7 @@ body {
 }
 
 /* ============================ */
-/* 👨‍🔧 HANDLER DROPDOWN */
+/*   DROPDOWN HANDLER   */
 /* ============================ */
 .assign-select {
   padding: 6px 8px;
@@ -411,7 +411,7 @@ body {
 }
 
 /* ============================ */
-/* 🧾 DESCRIPTION MODAL */
+/*   DESCRIPTION MODAL */
 /* ============================ */
 #viewDescriptionModal .tc-modal__content {
   max-width: 500px;
@@ -425,7 +425,7 @@ body {
 }
 
 /* ============================ */
-/* 🔎 VIEW DETAILS BUTTON */
+/*   VIEW DETAILS BUTTON */
 /* ============================ */
 .btn-view-description {
   display: block;
@@ -446,7 +446,7 @@ body {
 }
 
 /* ============================ */
-/* ✂️ DESCRIPTION TRUNCATION */
+/*   DESCRIPTION TRUNCATION */
 /* ============================ */
 .ticket-description {
   max-width: 180px;
@@ -457,7 +457,7 @@ body {
 }
 
 /* ============================ */
-/* 🗓️ SET DEADLINE MODAL */
+/*   SET DEADLINE MODAL */
 /* ============================ */
 #setDeadlineModal .tc-modal__content {
   max-width: 400px;
@@ -481,7 +481,7 @@ body {
 }
 
 /* ============================ */
-/* 🔍 REVIEW MODAL & HANDLER */
+/*   REVIEW MODAL & HANDLER */
 /* ============================ */
 .review-handler {
   color: #2563eb;
@@ -596,7 +596,7 @@ body {
 }
 
 /* ============================ */
-/* 🎯 STATUS BADGES */
+/* STATUS BADGES
 /* ============================ */
 .status-badge {
   display: inline-block;

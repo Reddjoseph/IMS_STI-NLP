@@ -40,6 +40,9 @@ window.onload = function () {
   const loginGroup = document.querySelector('.login-avatar-group');
   const roleSelect = document.getElementById('role-select');
   const modalTitle = loginModal.querySelector('h2');
+  const automateWrapper = document.getElementById('automate-btn-wrapper');
+  const automateBtn = document.getElementById('automate-btn');
+
 
   // ==================== NOTIFICATION ELEMENTS ====================
   const notifWrapper = document.getElementById('notification-wrapper');
@@ -181,7 +184,25 @@ window.onload = function () {
   }
 
   // ==================== LOGIN & REGISTER TRANSITION ====================
+  function clearLoginFields() {
+    document.getElementById('first-name').value = '';
+    document.getElementById('last-name').value = '';
+    emailInput.value = '';
+    passwordInput.value = '';
+    loginError.textContent = '';
+  }
+  function resetToLoginMode() {
+    modalTitle.textContent = 'Login';
+    registerBtn.style.display = 'none';
+    loginActionBtn.style.display = 'block';
+    toggleRegister.style.display = 'block';
+    toggleLogin.style.display = 'none';
+    document.getElementById('first-name').style.display = 'none';
+    document.getElementById('last-name').style.display = 'none';
+  }
+
   function animateTransition(showRegister) {
+    clearLoginFields();
     loginModal.classList.add('fade-transition');
     setTimeout(() => {
       if (showRegister) {
@@ -190,7 +211,7 @@ window.onload = function () {
         loginActionBtn.style.display = 'none';
         toggleRegister.style.display = 'none';
         toggleLogin.style.display = 'block';
-        roleSelect.style.display = 'block';
+        // No roleSelect anymore
         document.getElementById('first-name').style.display = 'block';
         document.getElementById('last-name').style.display = 'block';
       } else {
@@ -199,7 +220,6 @@ window.onload = function () {
         loginActionBtn.style.display = 'block';
         toggleRegister.style.display = 'block';
         toggleLogin.style.display = 'none';
-        roleSelect.style.display = 'none';
         document.getElementById('first-name').style.display = 'none';
         document.getElementById('last-name').style.display = 'none';
       }
@@ -208,8 +228,17 @@ window.onload = function () {
   }
 
   // ==================== LOGIN & REGISTER LOGIC ====================
-  loginBtn.addEventListener('click', () => loginModal.style.display = 'block');
-  closeLogin.addEventListener('click', () => loginModal.style.display = 'none');
+  loginBtn.addEventListener('click', () => {
+    clearLoginFields();
+    loginModal.style.display = 'block';
+  });
+
+  closeLogin.addEventListener('click', () => {
+    clearLoginFields();
+    loginModal.style.display = 'none';
+    resetToLoginMode();
+  });
+
   toggleRegister.addEventListener('click', () => animateTransition(true));
   toggleLogin.addEventListener('click', () => animateTransition(false));
 
@@ -218,11 +247,13 @@ window.onload = function () {
     const lastName = document.getElementById('last-name').value.trim();
     const email = emailInput.value.trim();
     const password = passwordInput.value;
-    const role = roleSelect.value;
+    const role = "User";
+
     if (!firstName || !lastName) {
       loginError.textContent = "Please enter your first and last name.";
       return;
     }
+
     auth.createUserWithEmailAndPassword(email, password)
       .then(userCredential => {
         const user = userCredential.user;
@@ -233,8 +264,9 @@ window.onload = function () {
         });
       })
       .then(() => {
+        clearLoginFields();
         loginModal.style.display = 'none';
-        loginError.textContent = '';
+        resetToLoginMode();
       })
       .catch(error => loginError.textContent = error.message);
   });
@@ -243,7 +275,10 @@ window.onload = function () {
     const email = emailInput.value;
     const password = passwordInput.value;
     auth.signInWithEmailAndPassword(email, password)
-      .then(() => loginModal.style.display = 'none')
+      .then(() => {
+        clearLoginFields();
+        loginModal.style.display = 'none';
+      })
       .catch(error => loginError.textContent = error.message);
   });
 
@@ -267,7 +302,8 @@ window.onload = function () {
         notifDropdown.querySelector(".notif-empty").style.display = "block";
       }
 
-      clearPageCSS(); // 🧼 remove previous page-specific CSS
+      clearPageCSS();
+      clearDynamicModals();
 
       loadPage('home');
       setActiveLink(document.getElementById('home-link'));
@@ -297,7 +333,7 @@ window.onload = function () {
   avatarDropdown.addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", () => avatarDropdown.classList.remove("visible"));
 
- // ==================== AUTH STATE CHANGE HANDLER ====================
+// ==================== AUTH STATE CHANGE HANDLER ====================
 auth.onAuthStateChanged(user => {
   if (ticketUnsub) { ticketUnsub(); ticketUnsub = null; }
   if (notifUnsub) { notifUnsub(); notifUnsub = null; }
@@ -306,15 +342,13 @@ auth.onAuthStateChanged(user => {
     avatar.style.display = 'block';
     sideNav.classList.add('active');
     loginBtn.style.display = 'none';
-    // Change background to white when logged in
-    document.body.style.background = '#ffffff';
-    document.body.style.backgroundImage = 'none';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundRepeat = '';
-    document.body.style.backgroundPosition = '';
+
+    // ✅ Load Landing Page cleanly (no duplication)
+    loadPage('landing');
 
 
-    // ✅ Fetch user document for role and avatar
+
+    // Fetch user document for role and avatar
     db.collection('users').doc(user.uid).get()
       .then(doc => {
         if (doc.exists) {
@@ -324,7 +358,7 @@ auth.onAuthStateChanged(user => {
           userRoleDiv.textContent = user.email;
           userRoleDiv.style.display = 'block';
 
-          // ✅ Update avatar image from Firestore
+          // Update avatar image from Firestore
           const avatarImgEl = document.querySelector('#user-avatar img');
           if (data.avatarURL && avatarImgEl) {
             avatarImgEl.src = data.avatarURL + '?t=' + Date.now();
@@ -332,7 +366,7 @@ auth.onAuthStateChanged(user => {
             avatarImgEl.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
           }
 
-          // 👁️ Real-time listener for avatar changes
+          // Real-time listener for avatar changes
           db.collection('users').doc(user.uid).onSnapshot(docSnap => {
             if (docSnap.exists) {
               const newAvatarURL = docSnap.data().avatarURL;
@@ -353,22 +387,33 @@ auth.onAuthStateChanged(user => {
           document.getElementById('rooms-link-a').style.display = 'none';
           document.getElementById('tasks-link').style.display = 'none';
           if (notifWrapper) notifWrapper.style.display = 'none';
+          if (role === 'Admin' || role === 'Maintenance') {
+            automateWrapper.style.display = 'flex';
+          } else {
+            automateWrapper.style.display = 'none';
+          }
 
           if (role === 'Admin' || role === 'Maintenance') {
             if (notifWrapper) notifWrapper.style.display = 'flex';
 
-            const roomsLink = document.getElementById('rooms-link-a');
+            const roomsLinkLi = document.getElementById('rooms-link'); // <li>
+            const roomsLinkA = document.getElementById('rooms-link-a'); // <a>
             const tasksLink = document.getElementById('tasks-link');
 
+            if (roomsLinkLi) roomsLinkLi.style.display = 'block'; 
+          // ==================== ADMIN LOGIN ====================
             if (role === 'Admin') {
               inventoryLink.style.display = 'block';
               myTicketsLink.style.display = 'block';
-              roomsLink.style.display = 'block';
+              if (roomsLinkA) roomsLinkA.style.display = 'block';
+              if (roomsLinkLi) roomsLinkLi.style.display = 'block';
               tasksLink.style.display = 'none';
+              document.getElementById('users-link').style.display = 'block';
             }
 
             if (role === 'Maintenance') {
-              roomsLink.style.display = 'none';
+              if (roomsLinkA) roomsLinkA.style.display = 'block';
+              if (roomsLinkLi) roomsLinkLi.style.display = 'block';
               inventoryLink.style.display = 'none';
               myTicketsLink.style.display = 'none';
               tasksLink.style.display = 'block';
@@ -378,7 +423,7 @@ auth.onAuthStateChanged(user => {
               .orderBy('createdAt', 'desc')
               .limit(20)
               .onSnapshot(snapshot => renderNotifications(snapshot.docs, true));
-
+          // ==================== USER LOGIN ====================
           } else if (role === 'User') {
             inventoryLink.style.display = 'none';
             myTicketsLink.style.display = 'block';
@@ -402,6 +447,7 @@ auth.onAuthStateChanged(user => {
             inventoryLink.style.display = 'none';
             myTicketsLink.style.display = 'none';
             if (notifWrapper) notifWrapper.style.display = 'none';
+            document.getElementById('users-link').style.display = 'none';
             document.getElementById('rooms-link-a').style.display = 'none';
           }
         }
@@ -420,6 +466,7 @@ auth.onAuthStateChanged(user => {
     loginBtn.style.display = 'inline-flex';
     inventoryLink.style.display = 'none';
     myTicketsLink.style.display = 'none';
+    document.getElementById('users-link').style.display = 'none';
     document.getElementById('user-role').style.display = 'none';
     document.getElementById('tasks-link').style.display = 'none';
     if (notifWrapper) notifWrapper.style.display = 'none';
@@ -430,6 +477,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById('rooms-link-a').style.display = 'none';
     const roomsLi = document.getElementById('rooms-link');
     if (roomsLi) roomsLi.style.display = 'none';
+    automateWrapper.style.display = 'none';
 
     // ✅ Restore original background when logged out
     document.body.style.background = "url('Assets/BG_Main.jpg') no-repeat center center fixed";
@@ -467,7 +515,8 @@ auth.onAuthStateChanged(user => {
         'inventory-link-a': 'inventory',
         'profile-link': 'profile',
         'rooms-link-a': 'rooms',
-        'tasks-link-a': 'tasks'
+        'tasks-link-a': 'tasks',
+        'users-link-a': 'users'
       };
       if (pageMap[id]) {
         e.preventDefault();
@@ -483,10 +532,41 @@ auth.onAuthStateChanged(user => {
     activeLink.classList.add('active');
   }
 
-  // ==================== 🧼 CSS CLEANUP HELPER ====================
+// ==================== AUTOMATE BUTTON HANDLER ====================
+automateBtn.addEventListener('click', () => {
+  const mainContent = document.getElementById('main-content');
+
+  // Check if we are on the Inventory page
+  if (mainContent && mainContent.querySelector('.inventory-table')) {
+    if (typeof window.showAutomateModal === 'function') {
+      window.showAutomateModal();
+    }
+  }
+
+  // Check if we are on the Tickets page
+  else if (mainContent && mainContent.querySelector('#tc-ticketsTableBody')) {
+    if (typeof window.showTicketsAutomateModal === 'function') {
+      window.showTicketsAutomateModal();
+    }
+  }
+
+  else {
+    console.log('🤖 Automate button clicked — but no matching page found.');
+  }
+});
+
+
+  // ==================== CSS CLEANUP HELPER =====================
   function clearPageCSS() {
     const pageCSS = document.querySelectorAll('link[id$="-css"]');
     pageCSS.forEach(link => link.remove());
+  }
+
+  // ==================== GLOBAL PAGE CLEANUP ====================
+  function clearDynamicModals() {
+    document.querySelectorAll(".tc-modal").forEach(modal => modal.remove());
+    window.__submitModalInitialized = false;
+    window.__finishMaintenanceHandlerAttached = false;
   }
 
   // ==================== DYNAMIC PAGE LOADER ====================
@@ -505,6 +585,10 @@ auth.onAuthStateChanged(user => {
         fileName = 'home.html';
         bgImage = "url('Assets/BG_Main.jpg')";
         break;
+      case 'landing':
+        fileName = 'landingpage.html';
+        bgImage = "url('Assets/BG_Inventory.jpg')";
+        break;
       case 'mytickets':
         fileName = 'tickets-content.html';
         bgImage = "url('Assets/BG_Inventory.jpg')";
@@ -515,7 +599,7 @@ auth.onAuthStateChanged(user => {
         break;
       case 'profile':
         fileName = 'profile.html';
-        bgImage = "url('Assets/BG_Main.jpg')";
+        bgImage = "url('Assets/BG_Inventory.jpg')";
         break;
       case 'rooms':
         fileName = 'rooms.html';
@@ -524,6 +608,10 @@ auth.onAuthStateChanged(user => {
         fileName = 'tasks.html';
         bgImage = "url('Assets/BG_Inventory.jpg')";
         break;
+      case 'users':
+      fileName = 'user.html';
+      bgImage = "url('Assets/BG_Inventory.jpg')";
+      break;
       default:
         fileName = 'home.html';
         bgImage = "url('Assets/BG_Main.jpg')";
@@ -585,6 +673,20 @@ auth.onAuthStateChanged(user => {
           loadCSS('tasks-css', 'tasks.css');
           loadJS('tasks-js', 'tasks.js');
         }
+        if (page === 'users') {
+          loadCSS('user-css', 'user.css');
+          loadJS('user-js', 'user.js');
+        }
+        if (page === 'users') {
+          loadCSS('user-css', 'user.css');
+          loadJS('user-js', 'user.js');
+        }
+        if (page === 'landing') {
+          loadCSS('landingpage-css', 'landingpage.css');
+          loadJS('landingpage-js', 'landingpage.js');
+        }
+
+
       })
       .catch(err => {
         document.getElementById('main-content').innerHTML = '<p>Error loading page.</p>';

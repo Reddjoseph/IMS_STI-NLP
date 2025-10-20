@@ -192,7 +192,9 @@ function openDateAddedModal(itemId, dateStr) {
       try {
         const itemRef = doc(db, "inventory", itemId);
         await updateDoc(itemRef, {
-          MaintenanceDueDate: "URGENT"
+          MaintenanceDueDate: "URGENT",
+          Tracking: "URGENT",
+          LastMaintenanceDate: null // optional: clear last maintenance if needed
         });
         alert("✅ Maintenance request sent! Item marked as URGENT.");
         dateAddedModal.style.display = "none";
@@ -208,6 +210,7 @@ function openDateAddedModal(itemId, dateStr) {
 closeDateAddedModal.addEventListener("click", () => {
   dateAddedModal.style.display = "none";
 });
+
 
 /* -------------------------
    Items Chart
@@ -783,6 +786,272 @@ function showEditItemForm(itemId, itemData) {
       alert("❌ Failed to update item.");
     }
   });
+}
+
+// ==================================================
+// =                    AUTOMATE                    =
+// ============================= ====================
+window.showAutomateModal = function () {
+  const total = Number(document.getElementById("stat-total")?.textContent || "0");
+  const newItems = Number(document.getElementById("stat-new")?.textContent || "0");
+  const goodItems = Number(document.getElementById("stat-good")?.textContent || "0");
+  const maintenanceItems = Number(document.getElementById("stat-maintenance")?.textContent || "0");
+  const replacementItems = Number(document.getElementById("stat-replacement")?.textContent || "0");
+
+  const summaryHTML = `
+    As of now, the inventory contains a <u>total</u> of <strong>${total}</strong> items. 
+    Among these, <strong>${newItems}</strong> are newly added, 
+    <strong>${goodItems}</strong> are in good condition, 
+    <strong>${maintenanceItems}</strong> require maintenance, and 
+    <strong>${replacementItems}</strong> are marked for replacement. 
+    This provides a concise overview of the institution’s asset condition.
+  `.replace(/\s+/g, " ").trim();
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal modal--small";
+
+  modal.innerHTML = `
+    <h2 style="text-align:center;">🤖 Inventory Assistant</h2>
+    <div id="automate-summary-wrapper" style="position:relative; font-size:15px; line-height:1.6; text-align:justify; padding:10px 0;">
+      <span id="automate-summary-text"></span><span class="typing-cursor">|</span>
+    </div>
+
+    <div id="qa-list" style="margin-top:15px; font-size:15px; line-height:1.6;"></div>
+
+    <!-- Initially hidden input section -->
+    <div id="qa-section" style="margin-top:20px; text-align:center; display:none;">
+      <input id="qa-input" type="text" placeholder="Ask about your inventory..." 
+        style="padding:8px; width:70%; border-radius:6px; border:1px solid #ccc; font-size:0.9rem;">
+      <button id="qa-btn" style="padding:8px 12px; margin-left:8px; background:#2D3E50; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+        <span class="btn-text">Ask</span>
+        <span class="spinner" style="display:none; margin-left:6px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%; width:14px; height:14px; animation:spin 1s linear infinite;"></span>
+      </button>
+    </div>
+
+    <div style="text-align:center; margin-top:20px;">
+      <button id="close-automate-btn" class="close-automate-btn">Close</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const textContainer = modal.querySelector("#automate-summary-text");
+  const qaList = modal.querySelector("#qa-list");
+  const qaInput = modal.querySelector("#qa-input");
+  const qaBtn = modal.querySelector("#qa-btn");
+  const spinner = modal.querySelector(".spinner");
+  const btnText = modal.querySelector(".btn-text");
+  const qaSection = modal.querySelector("#qa-section");
+  let cursor = modal.querySelector(".typing-cursor");
+
+  let index = 0;
+  const speed = 25;
+
+  function typeWriter() {
+    if (index < summaryHTML.length) {
+      textContainer.innerHTML = summaryHTML.substring(0, index + 1);
+      index++;
+      setTimeout(typeWriter, speed);
+    } else {
+      cursor.classList.add("blink");
+      qaSection.style.display = "block"; 
+    }
+  }
+  typeWriter();
+
+  function moveCursorTo(el) {
+    if (cursor) cursor.remove();
+    cursor = document.createElement("span");
+    cursor.className = "typing-cursor blink";
+    cursor.textContent = "|";
+    el.appendChild(cursor);
+  }
+
+  function cleanQuestion(q) {
+    return q
+      .toLowerCase()
+      .replace(/[?.]/g, "")
+      .replace(/\b(the|a|an|is|are|to|in|at|of|items?|item|which|what|where|who|does|do|show|list|give|me|all)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  qaBtn.addEventListener("click", async () => {
+    const rawQ = qaInput.value.trim();
+    if (!rawQ) return;
+
+    qaInput.disabled = true;
+    qaBtn.disabled = true;
+    btnText.style.display = "none";
+    spinner.style.display = "inline-block";
+    qaBtn.style.cursor = "not-allowed";
+    qaBtn.style.opacity = "0.7";
+
+    const qEl = document.createElement("div");
+    qEl.style.marginTop = "15px";
+    qEl.innerHTML = `<strong>Q:</strong> ${rawQ}`;
+    qaList.appendChild(qEl);
+
+    const aEl = document.createElement("div");
+    aEl.style.marginTop = "5px";
+    qaList.appendChild(aEl);
+
+    const rows = Array.from(document.querySelectorAll('#inventory-root tr'));
+    const items = rows.map(row => {
+      const cells = row.querySelectorAll('td');
+      return cells.length
+        ? {
+            id: cells[0].textContent.trim(),
+            name: cells[1].textContent.trim(),
+            location: cells[2].textContent.trim(),
+            date: cells[3].textContent.trim(),
+            condition: cells[4].textContent.trim().toLowerCase()
+          }
+        : null;
+    }).filter(Boolean);
+
+    const q = rawQ.toLowerCase();
+    let answer = "";
+
+    if (q.includes("total")) {
+      answer = `There are currently <strong>${items.length}</strong> items in the inventory.`;
+    } else if (q.includes("recent") || q.includes("latest") || q.includes("newest")) {
+      const latest = [...items].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      answer = latest
+        ? `The most recently added item is <strong>${latest.name}</strong> (${latest.id}) added on ${latest.date}.`
+        : "No items found.";
+    } else if (q.includes("oldest")) {
+      const oldest = [...items].sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      answer = oldest
+        ? `The oldest item is <strong>${oldest.name}</strong> (${oldest.id}) added on ${oldest.date}.`
+        : "No items found.";
+    } else if (q.includes("most") && q.includes("condition")) {
+      const counts = {};
+      items.forEach(i => counts[i.condition] = (counts[i.condition] || 0) + 1);
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      answer = top
+        ? `The condition with the most items is <strong>${top[0]}</strong> with ${top[1]} items.`
+        : "No condition data available.";
+    } else if (q.includes("most") && q.includes("location")) {
+      const counts = {};
+      items.forEach(i => counts[i.location] = (counts[i.location] || 0) + 1);
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      answer = top
+        ? `The location with the most items is <strong>${top[0]}</strong> with ${top[1]} items.`
+        : "No location data available.";
+    } else if (q.includes("damaged") || q.includes("replacement")) {
+      const filtered = items.filter(i => i.condition.includes("damaged") || i.condition.includes("replacement"));
+      answer = filtered.length
+        ? `The following items need replacement:<br>• ${filtered.map(i => `${i.name} (${i.id})`).join("<br>• ")}`
+        : "No damaged or replacement items found.";
+    } else if (q.includes("maintenance")) {
+      const filtered = items.filter(i => i.condition.includes("maintenance"));
+      answer = filtered.length
+        ? `The following items require maintenance:<br>• ${filtered.map(i => `${i.name} (${i.id})`).join("<br>• ")}`
+        : "No items currently require maintenance.";
+    } else if (q.includes("in ")) {
+      const cleaned = cleanQuestion(rawQ);
+      const filtered = items.filter(i => i.location.toLowerCase().includes(cleaned));
+      answer = filtered.length
+        ? `Items found in <u>${cleaned}</u>:<br>• ${filtered.map(i => `${i.name} (${i.id})`).join("<br>• ")}`
+        : `No items found in "${cleaned}".`;
+    } else if (q.includes("where") || q.includes("located")) {
+      const cleaned = cleanQuestion(rawQ);
+      const filtered = items.filter(i => i.name.toLowerCase().includes(cleaned));
+      answer = filtered.length
+        ? `Item(s) named <u>${cleaned}</u> are located in:<br>• ${filtered.map(i => `${i.location} (${i.id})`).join("<br>• ")}`
+        : `No items named "${cleaned}" found.`;
+    } else {
+      answer = `<em>🤖 Sorry, I don't have an answer for that yet.</em>`;
+    }
+
+    let i = 0;
+    aEl.innerHTML = `<strong>A:</strong> `;
+    function typeAnswer() {
+      if (i < answer.length) {
+        aEl.innerHTML = `<strong>A:</strong> ${answer.substring(0, i + 1)}`;
+        i++;
+        moveCursorTo(aEl);
+        setTimeout(typeAnswer, 15);
+      } else {
+        moveCursorTo(aEl);
+
+        qaInput.disabled = false;
+        qaBtn.disabled = false;
+        qaBtn.style.cursor = "pointer";
+        qaBtn.style.opacity = "1";
+        spinner.style.display = "none";
+        btnText.style.display = "inline";
+        qaInput.value = "";
+        qaInput.focus();
+      }
+    }
+    typeAnswer();
+  });
+
+  document.getElementById("close-automate-btn").addEventListener("click", () => overlay.remove());
+
+  if (!document.getElementById("automate-style")) {
+    const style = document.createElement("style");
+    style.id = "automate-style";
+    style.textContent = `
+      .typing-cursor { display:inline-block; margin-left:3px; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .blink { animation: blink 0.8s steps(1) infinite; }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(style);
+  }
+};
+
+// ================== 🧭 FILTER FUNCTIONALITY ==================
+const searchInput = document.getElementById('inventory-search-input');
+const labFilter = document.getElementById('filter-lab');
+const conditionFilter = document.getElementById('filter-condition');
+const tableBody = document.getElementById('inventory-root');
+
+function applyFilters() {
+  const searchTerm = searchInput?.value?.toLowerCase().trim() || "";
+  const labTerm = labFilter?.value?.toLowerCase() || "";
+  const conditionTerm = conditionFilter?.value?.toLowerCase() || "";
+
+  const rows = tableBody.querySelectorAll('tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length === 0) return;
+
+    const id = cells[0].textContent.toLowerCase();
+    const name = cells[1].textContent.toLowerCase();
+    const location = cells[2].textContent.toLowerCase();
+    const date = cells[3].textContent.toLowerCase();
+    const condition = cells[4].textContent.toLowerCase();
+
+    const matchesSearch =
+      id.includes(searchTerm) ||
+      name.includes(searchTerm) ||
+      location.includes(searchTerm) ||
+      date.includes(searchTerm) ||
+      condition.includes(searchTerm);
+
+    const matchesLab = !labTerm || location.includes(labTerm);
+    const matchesCondition = !conditionTerm || condition.includes(conditionTerm);
+
+    row.style.display = (matchesSearch && matchesLab && matchesCondition) ? '' : 'none';
+  });
+}
+
+[searchInput, labFilter, conditionFilter].forEach(el => {
+  el?.addEventListener('input', applyFilters);
+  el?.addEventListener('change', applyFilters);
+});
+
+async function fetchInventoryWithFilters() {
+  await fetchInventory();
+  applyFilters();
 }
 
 /* -------------------------

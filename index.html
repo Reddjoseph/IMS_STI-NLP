@@ -65,6 +65,9 @@
         <li id="inventory-link" style="display: none;">
           <a href="#" id="inventory-link-a"><i class="fas fa-boxes"></i>Inventory</a>
         </li>
+        <li id="users-link" style="display:none;">
+          <a href="#" id="users-link-a"><i class="fas fa-users"></i>Users</a>
+        </li>
         <li id="rooms-link">
           <a href="#" id="rooms-link-a"><i class="fas fa-door-open"></i>Rooms</a>
         </li>
@@ -79,6 +82,12 @@
 
     <!-- Top-right header (notifications + user) -->
     <div class="top-header">
+      <!-- 🚀 Automate Button (added) -->
+      <div id="automate-btn-wrapper" style="display:none;">
+        <div id="automate-btn" title="Automate">
+          <i class="fas fa-robot"></i>
+        </div>
+      </div>
       <!-- Notification Button -->
       <div id="notification-wrapper" style="display:none; position: relative;">
         <div id="notification-btn">
@@ -123,12 +132,6 @@
 
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
-      
-      <select id="role-select" style="width: 100%; padding: 8px; margin-bottom: 10px; display: none;">
-        <option value="User" selected>User</option>
-        <option value="Admin">Admin</option>
-        <option value="Maintenance">Maintenance</option>
-      </select>
 
       <button id="login-btn">Login</button>
       <button id="register-btn" style="display:none;">Register</button>

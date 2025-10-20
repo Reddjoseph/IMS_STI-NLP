@@ -1,19 +1,19 @@
 /* ============ Home Page Layout ============ */
 .home-container {
-  position: fixed;               /* ✅ make it fill the viewport */
+  position: fixed;             
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
 
   display: flex;
-  justify-content: center;       /* center horizontally */
-  align-items: center;           /* center vertically */
+  justify-content: center;    
+  align-items: center;        
   gap: 30px;
-  flex-wrap: nowrap;             /* keep 3 cards on one line on large screens */
+  flex-wrap: nowrap;        
   padding: 0 20px;
   box-sizing: border-box;
-  z-index: 1;                    /* keep it behind the top header */
+  z-index: 1;                
 }
 
 /* Card Style */
@@ -28,12 +28,12 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 2s ease, box-shadow 0.3s ease;
 
   /* ✨ Pop animation */
   transform: scale(0.9);
   opacity: 0;
-  animation: popIn 0.5s ease forwards;
+  animation: popIn 0.25s ease forwards;
 }
 
 /* 🪄 Staggered delays */
@@ -81,11 +81,11 @@
   background: #2563eb;
   color: white;
   text-decoration: none;
-  padding: 10px 0px;        /* 🟡 smaller padding */
-  border-radius: 6px;       /* 🟡 slightly smaller corners */
+  padding: 10px 0px;    
+  border-radius: 6px;     
   text-align: center;
   font-weight: 600;
-  font-size: 14px;          /* 🟡 reduced font size */
+  font-size: 14px;        
   margin-top: 15px;
   transition: background 0.3s ease;
 }
@@ -97,10 +97,10 @@
 /* Responsive */
 @media (max-width: 1100px) {
   .home-container {
-    flex-wrap: wrap;   /* stack cards when needed */
+    flex-wrap: wrap;  
     justify-content: center;
     align-items: center;
-    overflow-y: auto;  /* allow scroll on mobile */
+    overflow-y: auto; 
     padding: 40px 20px;
   }
 

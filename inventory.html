@@ -63,8 +63,34 @@
         </button>
       </div>
 
-      <!-- Filters are rendered dynamically here -->
-      <div id="inventory-filters"></div>
+      <!-- 🔍 Search and Filter Section -->
+      <div class="inventory-filters" style="display:flex; gap:10px; margin:10px 0; flex-wrap:wrap;">
+        <input 
+          type="text" 
+          id="inventory-search-input" 
+          placeholder="Search by ID, name, location, or condition..."
+          style="flex:1; min-width:200px; padding:8px 12px; border:1.5px solid #ccc; border-radius:6px;"
+        />
+        <select id="filter-lab" style="padding:8px 12px; border:1.5px solid #ccc; border-radius:6px; min-width:150px;">
+          <option value="">All Locations</option>
+          <option>Main Building</option>
+          <option>Annex</option>
+          <option>Laboratory 1</option>
+          <option>Laboratory 2</option>
+          <option>Laboratory 3</option>
+          <option>Room 201</option>
+          <option>Room 202</option>
+          <option>Room 203</option>
+          <option>Room 204</option>
+        </select>
+        <select id="filter-condition" style="padding:8px 12px; border:1.5px solid #ccc; border-radius:6px; min-width:150px;">
+          <option value="">All Conditions</option>
+          <option>New</option>
+          <option>Good</option>
+          <option>For Maintenance</option>
+          <option>For Replacement</option>
+        </select>
+      </div>
 
       <!-- Scrollable Table with sticky header -->
       <div class="inventory-table-wrapper">
@@ -100,17 +126,18 @@
       </div>
     </div>
   </div>
+
   <!-- 🆕 Date Added Modal -->
-<div id="dateAddedModal" class="modal-overlay" style="display:none;">
-  <div class="modal modal--small">
-    <h2>Date Added</h2>
-    <p id="dateAddedDescription">Loading...</p>
-    <div style="text-align:center;margin-top:15px;">
-      <button id="requestMaintenanceBtn" style="background-color:#dc2626;color:white;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;">Request Maintenance</button>
-      <button id="closeDateAddedModal" style="margin-left:10px;background-color:#6b7280;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">Close</button>
+  <div id="dateAddedModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal--small">
+      <h2>Date Added</h2>
+      <p id="dateAddedDescription">Loading...</p>
+      <div style="text-align:center;margin-top:15px;">
+        <button id="requestMaintenanceBtn" style="background-color:#dc2626;color:white;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;">Request Maintenance</button>
+        <button id="closeDateAddedModal" style="margin-left:10px;background-color:#6b7280;color:white;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">Close</button>
+      </div>
     </div>
   </div>
-</div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

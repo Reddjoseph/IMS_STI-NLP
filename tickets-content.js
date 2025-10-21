@@ -1,5 +1,48 @@
-//  tickets-content.js (Admin: Review Modal + Clickable Handler + Deadline Modal + Full Feature)
+// tickets-content.js (Converted to Firebase v10 modular SDK)
+// Features:
+// - All original ticket features preserved (pagination, admin flows, feedback, automate, etc.)
+// - Multi-image upload using Firebase Storage (modular)
+// - Save image URLs to Firestore as `imageUrls: []`
+// - Click item name to view images modal (thumbnails) and click thumbnail -> lightbox
+// - Uses your provided firebaseConfig (replace if needed)
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+
+// --------------------------------------------------------
+// Paste your firebaseConfig exactly as provided (you gave it earlier)
+const firebaseConfig = {
+  apiKey: "AIzaSyAw2rSjJ3f_S98dntbsyl9kyXvi9MC44Dw",
+  authDomain: "fir-inventory-2e62a.firebaseapp.com",
+  projectId: "fir-inventory-2e62a",
+  storageBucket: "fir-inventory-2e62a.firebasestorage.app",
+  messagingSenderId: "380849220480",
+  appId: "1:380849220480:web:5a43b227bab9f9a197af65",
+  measurementId: "G-ERT87GL4XC"
+};
+// --------------------------------------------------------
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// Small helper to wait for element
 function waitForElement(selector, timeout = 2500) {
   return new Promise((resolve, reject) => {
     const el = document.querySelector(selector);
@@ -22,6 +65,7 @@ function waitForElement(selector, timeout = 2500) {
   try {
     await waitForElement("#tc-ticketsTableBody");
 
+    // DOM elements
     const ticketsTableBody = document.getElementById("tc-ticketsTableBody");
     const createTicketBtn = document.getElementById("tc-createTicketBtn");
     const modal = document.getElementById("tc-ticketModal");
@@ -30,10 +74,12 @@ function waitForElement(selector, timeout = 2500) {
     const ticketConcern = document.getElementById("tc-ticketConcern");
     const ticketDescription = document.getElementById("tc-ticketDescription");
     const ticketItem = document.getElementById("tc-ticketItem");
+    const ticketImagesInput = document.getElementById("tc-ticketImages"); // NEW file input
     const searchInput = document.getElementById("tc-searchInput");
     const prevPageBtn = document.getElementById("tc-prevPage");
     const nextPageBtn = document.getElementById("tc-nextPage");
 
+    // feedback/description modals
     const viewFeedbackModal = document.getElementById("viewFeedbackModal");
     const closeViewFeedback = document.getElementById("closeViewFeedback");
     const feedbackTimeline = document.getElementById("feedbackTimeline");
@@ -42,57 +88,84 @@ function waitForElement(selector, timeout = 2500) {
     const closeViewDescription = document.getElementById("closeViewDescription");
     const fullDescriptionText = document.getElementById("fullDescriptionText");
 
+    // review (admin) modal buttons
+    const reviewModal = document.getElementById("reviewSubmissionModal");
+    const closeReviewModal = document.getElementById("closeReviewModal");
+    const markSolvedBtn = document.getElementById("markSolvedBtn");
+    const markUnsolvedBtn = document.getElementById("markUnsolvedBtn");
+
+
+    // image view modal & lightbox (new)
+    const viewImagesModal = document.getElementById("viewTicketImagesModal");
+    const closeViewImagesModal = document.getElementById("closeViewImagesModal");
+    const ticketImagesContainer = document.getElementById("ticketImagesContainer");
+    const imageLightbox = document.getElementById("imageLightbox");
+    const lightboxImage = document.getElementById("lightboxImage");
+
     const headerRow = document.getElementById("tc-headerRow");
 
-    const ticketsCollection = firebase.firestore().collection("tickets");
-    const inventoryCollection = firebase.firestore().collection("inventory");
-    const notificationsCollection = firebase.firestore().collection("notifications");
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // Firestore collections (modular)
+    const ticketsCollectionRef = collection(db, "tickets");
+    const inventoryCollectionRef = collection(db, "inventory");
+    const notificationsCollectionRef = collection(db, "notifications");
 
+    // Helper functions using modular API
     async function getUserRole() {
-      const user = auth.currentUser;
-      if (!user) return null;
-      const doc = await db.collection("users").doc(user.uid).get();
-      return doc.exists ? doc.data().role : null;
+      const currentUser = auth.currentUser;
+      if (!currentUser) return null;
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        return userDoc.exists() ? userDoc.data().role : null;
+      } catch (err) {
+        console.warn("getUserRole error:", err);
+        return null;
+      }
     }
 
     async function getMaintenanceUsers() {
-      const snapshot = await db.collection("users").where("role", "==", "Maintenance").get();
-      return snapshot.docs.map(d => ({
-        id: d.id,
-        name: `${d.data().firstName || ""} ${d.data().lastName || ""}`.trim() || d.data().email
-      }));
+      try {
+        const q = query(collection(db, "users"));
+        const snap = await getDocs(q);
+        // filter locally for role === "Maintenance"
+        return snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(u => u.role === "Maintenance")
+          .map(d => ({ id: d.id, name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || d.email }));
+      } catch (err) {
+        console.error("getMaintenanceUsers error:", err);
+        return [];
+      }
     }
 
     async function getTickets() {
       try {
-        const snapshot = await ticketsCollection.orderBy("createdAt", "desc").get();
-        return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      } catch (error) {
-        console.error("Error loading tickets:", error);
+        const q = query(ticketsCollectionRef, orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch (err) {
+        console.error("Error loading tickets:", err);
         return [];
       }
     }
 
     async function saveTicket(ticket) {
-      const docRef = await ticketsCollection.add(ticket);
+      const docRef = await addDoc(ticketsCollectionRef, ticket);
       return docRef.id;
     }
 
     async function deleteTicket(id) {
-      await ticketsCollection.doc(id).delete();
+      await deleteDoc(doc(db, "tickets", id));
     }
 
     async function getInventoryItems() {
       try {
-        const snapshot = await inventoryCollection.get();
-        return snapshot.docs.map((d) => {
+        const snap = await getDocs(inventoryCollectionRef);
+        return snap.docs.map(d => {
           const data = d.data();
           return {
             id: d.id,
             name: data.Name ?? d.id,
-            lab: data.Laboratory ?? "",
+            lab: data.Laboratory ?? ""
           };
         });
       } catch (err) {
@@ -154,15 +227,72 @@ function waitForElement(selector, timeout = 2500) {
     function shortenId(id = "") {
       return id.slice(-5);
     }
+    
+    // ====== Handle Save Deadline Modal ======
+    const deadlineModal = document.getElementById("setDeadlineModal");
+    const closeDeadlineModal = document.getElementById("closeDeadlineModal");
+    const saveDeadlineBtn = document.getElementById("saveDeadlineBtn");
 
+    if (saveDeadlineBtn && deadlineModal) {
+      saveDeadlineBtn.addEventListener("click", async () => {
+        const ticketId = deadlineModal.dataset.ticketId;
+        const userId = deadlineModal.dataset.userId;
+        const userName = deadlineModal.dataset.userName;
+        const deadlineDate = document.getElementById("deadlineDate").value;
+        const note = document.getElementById("deadlineNote").value.trim();
+
+        if (!ticketId || !userId) {
+          alert("Missing ticket or handler information.");
+          return;
+        }
+
+        try {
+          // Update Firestore ticket
+          await updateDoc(doc(db, "tickets", ticketId), {
+            assignedTo: userId,
+            assignedToName: userName,
+            deadline: deadlineDate ? Timestamp.fromDate(new Date(deadlineDate)) : null,
+            assignmentNote: note || "",
+            status: "Assigned",
+          });
+
+          // Add notification for the maintenance user
+          await addDoc(collection(db, "notifications"), {
+            message: `Ticket assigned to ${userName} (${userId})`,
+            ticketId,
+            createdAt: serverTimestamp(),
+            type: "assignment",
+          });
+
+          alert("Handler assigned successfully!");
+          deadlineModal.style.display = "none";
+          deadlineModal.setAttribute("aria-hidden", "true");
+
+          // refresh list
+          tickets = await getTickets();
+          filteredTickets = [...tickets];
+          renderTickets();
+        } catch (err) {
+          console.error("Failed to save deadline:", err);
+          alert("Failed to assign handler. Please try again.");
+        }
+      });
+    }
+
+    if (closeDeadlineModal && deadlineModal) {
+      closeDeadlineModal.addEventListener("click", () => {
+        deadlineModal.style.display = "none";
+        deadlineModal.setAttribute("aria-hidden", "true");
+      });
+    }
+
+    // Render tickets into table (keeps existing layout but item is clickable to view images)
     function renderTickets() {
       ticketsTableBody.innerHTML = "";
       const pageTickets = paginate(filteredTickets, currentPage, pageSize);
 
       pageTickets.forEach((t, index) => {
         const tr = document.createElement("tr");
-
-        //  Store the createdAt timestamp as a dataset for Automate feature
         const createdAtValue = t.createdAt?.toDate ? t.createdAt.toDate().toISOString() : "";
         tr.dataset.createdAt = createdAtValue;
 
@@ -185,10 +315,17 @@ function waitForElement(selector, timeout = 2500) {
                 <span class="handler-name">${t.assignedToName}</span>
               </td>`;
           } else {
+            // 🧩 Handler assignment column logic for Admin
             const assignedTo = t.assignedToName || "Unassigned";
+            const isDisabled =
+              t.status &&
+              ["Assigned", "Urgent", "Review", "Solved"].includes(t.status);
+
             assignColumn = `
               <td>
-                <select class="assign-select" data-id="${t.id}">
+                <select class="assign-select" data-id="${t.id}" ${
+                  isDisabled ? "disabled title='Handler already assigned'" : ""
+                }>
                   <option value="">${assignedTo}</option>
                   ${maintenanceUsers
                     .map(
@@ -203,9 +340,10 @@ function waitForElement(selector, timeout = 2500) {
           }
         }
 
+        // item cell clickable to open images modal
         tr.innerHTML = `
           <td>${shortenId(t.id)}</td>
-          <td>${escapeHtml(t.item)}</td>
+          <td><span class="ticket-item-link" data-id="${t.id}" style="color:#2563eb;cursor:pointer;text-decoration:underline;">${escapeHtml(t.item)}</span></td>
           <td>${escapeHtml(t.concern)}</td>
           <td class="ticket-description">
             ${escapeHtml(desc)}
@@ -229,13 +367,11 @@ function waitForElement(selector, timeout = 2500) {
               : `<td><button class="btn-feedback" data-id="${t.id}">View Feedback</button></td>`
           }
         `;
-
         ticketsTableBody.appendChild(tr);
       });
 
-      //  Admin handler modal logic
+      // Admin handler select
       if (currentRole === "Admin") {
-        // --- Handler select for new assignment ---
         ticketsTableBody.querySelectorAll(".assign-select").forEach(select => {
           select.addEventListener("change", async (e) => {
             const ticketId = e.target.dataset.id;
@@ -243,108 +379,28 @@ function waitForElement(selector, timeout = 2500) {
             if (!selectedId) return;
             const selectedUser = maintenanceUsers.find(u => u.id === selectedId);
             if (!selectedUser) return;
-            const modal = document.getElementById("setDeadlineModal");
-            modal.style.display = "flex";
-            modal.dataset.ticketId = ticketId;
-            modal.dataset.userId = selectedId;
-            modal.dataset.userName = selectedUser.name;
+            const modalEl = document.getElementById("setDeadlineModal");
+            modalEl.style.display = "flex";
+            modalEl.dataset.ticketId = ticketId;
+            modalEl.dataset.userId = selectedId;
+            modalEl.dataset.userName = selectedUser.name;
           });
         });
 
-        // --- Clickable handler for review modal ---
+        // handler-clickable
         document.querySelectorAll(".handler-clickable").forEach((el) => {
           el.addEventListener("click", () => {
             const ticketId = el.dataset.id;
             const submittedBy = el.dataset.user;
-            const modal = document.getElementById("reviewSubmissionModal");
-            modal.dataset.ticketId = ticketId;
+            const modalEl = document.getElementById("reviewSubmissionModal");
+            modalEl.dataset.ticketId = ticketId;
             document.getElementById("submittedByName").textContent = submittedBy;
-            modal.style.display = "flex";
+            modalEl.style.display = "flex";
           });
         });
-
-        // --- Deadline modal actions ---
-        const closeBtn = document.getElementById("closeDeadlineModal");
-        if (closeBtn) {
-          closeBtn.addEventListener("click", () => {
-            const modal = document.getElementById("setDeadlineModal");
-            modal.style.display = "none";
-            document.getElementById("deadlineDate").value = "";
-            document.getElementById("deadlineNote").value = "";
-          });
-        }
-
-        const saveBtn = document.getElementById("saveDeadlineBtn");
-        if (saveBtn) {
-          saveBtn.addEventListener("click", async () => {
-            const modal = document.getElementById("setDeadlineModal");
-            const ticketId = modal.dataset.ticketId;
-            const userId = modal.dataset.userId;
-            const userName = modal.dataset.userName;
-            const deadline = document.getElementById("deadlineDate").value;
-            const note = document.getElementById("deadlineNote").value.trim();
-            if (!deadline) {
-              alert("Please select a deadline date before saving.");
-              return;
-            }
-            try {
-              await ticketsCollection.doc(ticketId).update({
-                assignedTo: userId,
-                assignedToName: userName,
-                deadline: firebase.firestore.Timestamp.fromDate(new Date(deadline)),
-                assignmentNote: note,
-                status: "Assigned",
-              });
-              alert(`✅ Ticket assigned to ${userName} with deadline set!`);
-              modal.style.display = "none";
-              document.getElementById("deadlineDate").value = "";
-              document.getElementById("deadlineNote").value = "";
-              tickets = await getTickets();
-              filteredTickets = [...tickets];
-              renderTickets();
-            } catch (err) {
-              console.error("Error saving deadline:", err);
-              alert("Failed to save deadline.");
-            }
-          });
-        }
-
-        // --- Review modal actions ---
-        const closeReviewModal = document.getElementById("closeReviewModal");
-        const markSolvedBtn = document.getElementById("markSolvedBtn");
-        const markUnsolvedBtn = document.getElementById("markUnsolvedBtn");
-        const reviewModal = document.getElementById("reviewSubmissionModal");
-
-        if (closeReviewModal) {
-          closeReviewModal.onclick = () => (reviewModal.style.display = "none");
-        }
-
-        async function updateReviewStatus(ticketId, newStatus) {
-          try {
-            await ticketsCollection.doc(ticketId).update({ status: newStatus });
-            alert(`✅ Ticket marked as ${newStatus}!`);
-            reviewModal.style.display = "none";
-            tickets = await getTickets();
-            filteredTickets = [...tickets];
-            renderTickets();
-          } catch (err) {
-            console.error("Failed to update review status:", err);
-          }
-        }
-
-        if (markSolvedBtn && markUnsolvedBtn) {
-          markSolvedBtn.onclick = () => {
-            const ticketId = reviewModal.dataset.ticketId;
-            updateReviewStatus(ticketId, "Solved");
-          };
-          markUnsolvedBtn.onclick = () => {
-            const ticketId = reviewModal.dataset.ticketId;
-            updateReviewStatus(ticketId, "Unsolved");
-          };
-        }
       }
 
-      //  Admin can click "Assigned" status to mark as urgent
+      // Status badge click (Admin)
       if (currentRole === "Admin") {
         const statusModal = document.getElementById("statusModal");
         const closeStatusModal = document.getElementById("closeStatusModal");
@@ -369,7 +425,7 @@ function waitForElement(selector, timeout = 2500) {
           const ticketId = statusModal.dataset.ticketId;
           if (!ticketId) return;
           try {
-            await ticketsCollection.doc(ticketId).update({ status: "Urgent" });
+            await updateDoc(doc(db, "tickets", ticketId), { status: "Urgent" });
             alert("🚨 Ticket marked as Urgent!");
             statusModal.style.display = "none";
             tickets = await getTickets();
@@ -382,25 +438,25 @@ function waitForElement(selector, timeout = 2500) {
         });
       }
 
-      //  Delete buttons
+      // Delete buttons
       ticketsTableBody.querySelectorAll(".btn-delete").forEach((btn, idx) => {
         btn.addEventListener("click", () =>
           onDeleteTicket((currentPage - 1) * pageSize + idx)
         );
       });
 
-      //  Feedback buttons
+      // Feedback buttons for non-admins
       if (currentRole !== "Admin") {
         ticketsTableBody.querySelectorAll(".btn-feedback").forEach((btn) => {
           btn.addEventListener("click", async () => {
             const ticketId = btn.dataset.id;
-            const doc = await ticketsCollection.doc(ticketId).get();
-            const history = doc.data().feedbackHistory || [];
+            const docSnap = await getDoc(doc(db, "tickets", ticketId));
+            const history = docSnap.exists() ? docSnap.data().feedbackHistory || [] : [];
             feedbackTimeline.innerHTML = history.length
               ? history.map(f => `
                 <div class="feedback-entry">
                   <strong>${escapeHtml(f.admin)}</strong>
-                  <span class="date">${f.timestamp?.toDate().toLocaleString() || ""}</span>
+                  <span class="date">${f.timestamp?.toDate?.().toLocaleString() || ""}</span>
                   <p>${escapeHtml(f.message)}</p>
                 </div>`).join("")
               : "<p>No feedback yet.</p>";
@@ -410,7 +466,7 @@ function waitForElement(selector, timeout = 2500) {
         });
       }
 
-      //  Description buttons
+      // Description view buttons
       ticketsTableBody.querySelectorAll(".btn-view-description").forEach((btn) => {
         btn.addEventListener("click", () => {
           const desc = btn.dataset.desc || "No description available.";
@@ -424,6 +480,43 @@ function waitForElement(selector, timeout = 2500) {
       nextPageBtn.disabled = currentPage * pageSize >= filteredTickets.length;
     }
 
+
+    // -----------------------------
+    // Review modal status update
+    // -----------------------------
+    async function updateReviewStatus(ticketId, newStatus) {
+      if (!ticketId) return;
+      try {
+        await updateDoc(doc(db, "tickets", ticketId), { status: newStatus });
+        alert(`✅ Ticket marked as ${newStatus}!`);
+        if (reviewModal) reviewModal.style.display = "none";
+
+        // refresh local state and UI
+        tickets = await getTickets();
+        filteredTickets = [...tickets];
+        renderTickets();
+      } catch (err) {
+        console.error("Failed to update review status:", err);
+        alert("Failed to update ticket status. See console for details.");
+      }
+    }
+
+    if (closeReviewModal && reviewModal) {
+      closeReviewModal.addEventListener("click", () => (reviewModal.style.display = "none"));
+    }
+
+    if (markSolvedBtn && markUnsolvedBtn && reviewModal) {
+      markSolvedBtn.addEventListener("click", () => {
+        const ticketId = reviewModal.dataset.ticketId;
+        updateReviewStatus(ticketId, "Solved");
+      });
+      markUnsolvedBtn.addEventListener("click", () => {
+        const ticketId = reviewModal.dataset.ticketId;
+        updateReviewStatus(ticketId, "Unsolved");
+      });
+    }
+
+    // Search
     searchInput.addEventListener("input", () => {
       const q = searchInput.value.toLowerCase();
       filteredTickets = tickets.filter(
@@ -461,12 +554,14 @@ function waitForElement(selector, timeout = 2500) {
           tickets = tickets.filter((t) => t.id !== ticketToDelete.id);
           filteredTickets = [...tickets];
           renderTickets();
-        } catch {
+        } catch (err) {
+          console.error("delete ticket error:", err);
           alert("Failed to delete ticket. Please try again.");
         }
       }
     }
 
+    // create ticket modal open
     createTicketBtn.addEventListener("click", async () => {
       await loadItemsDropdown();
       modal.style.display = "flex";
@@ -474,13 +569,16 @@ function waitForElement(selector, timeout = 2500) {
       ticketConcern.value = "";
       ticketDescription.value = "";
       submitTicketBtn.textContent = "Submit";
+      if (ticketImagesInput) ticketImagesInput.value = "";
     });
 
+    // close create modal
     closeModal.addEventListener("click", () => {
       modal.style.display = "none";
       modal.setAttribute("aria-hidden", "true");
     });
 
+    // click outside to close modals (some)
     window.addEventListener("click", (e) => {
       if (e.target === modal) {
         modal.style.display = "none";
@@ -492,6 +590,7 @@ function waitForElement(selector, timeout = 2500) {
       }
     });
 
+    // ========== Submit Ticket (with multi-image upload) ==========
     submitTicketBtn.addEventListener("click", async () => {
       const concern = ticketConcern.value.trim();
       const description = ticketDescription.value.trim();
@@ -502,12 +601,18 @@ function waitForElement(selector, timeout = 2500) {
         alert("Please fill in all fields.");
         return;
       }
+
       const currentUser = auth.currentUser;
       let role = "User";
       if (currentUser) {
-        const userDoc = await db.collection("users").doc(currentUser.uid).get();
-        role = userDoc.exists ? userDoc.data().role : "User";
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          role = userDoc.exists() ? userDoc.data().role : "User";
+        } catch (err) {
+          console.warn("Could not determine user role:", err);
+        }
       }
+
       const newTicket = {
         item: itemName,
         itemId,
@@ -515,33 +620,67 @@ function waitForElement(selector, timeout = 2500) {
         description,
         status: "Pending",
         feedbackHistory: [],
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
         issuedBy: currentUser?.email || "Unknown user",
         issuedById: currentUser?.uid || null,
         createdByRole: role,
       };
+
       try {
+        // save ticket doc
         const newId = await saveTicket(newTicket);
+
+        // handle file uploads if any
+        if (ticketImagesInput && ticketImagesInput.files && ticketImagesInput.files.length > 0) {
+          const files = Array.from(ticketImagesInput.files);
+          const uploadPromises = files.map(async (file) => {
+            const path = `ticket_images/${newId}/${Date.now()}_${file.name}`;
+            const sRef = storageRef(storage, path);
+            const snap = await uploadBytes(sRef, file);
+            // get download URL
+            const url = await getDownloadURL(snap.ref);
+            return url;
+          });
+
+          const urls = await Promise.all(uploadPromises);
+          try {
+            await updateDoc(doc(db, "tickets", newId), { imageUrls: urls });
+          } catch (err) {
+            console.error("Failed to save imageUrls to ticket doc:", err);
+          }
+        }
+
+        // add a notification document (best-effort)
+        try {
+          await addDoc(notificationsCollectionRef, {
+            message: `${newTicket.issuedBy} issued a ticket regarding ${itemName}`,
+            itemName,
+            issuedBy: newTicket.issuedBy,
+            createdAt: serverTimestamp(),
+            createdByRole: role,
+          });
+        } catch (err) {
+          console.warn("Failed to create notification:", err);
+        }
+
+        // update UI
         newTicket.id = newId;
-        await notificationsCollection.add({
-          message: `${newTicket.issuedBy} issued a ticket regarding ${itemName}`,
-          itemName,
-          issuedBy: newTicket.issuedBy,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          createdByRole: role,
-        });
         tickets.unshift(newTicket);
         filteredTickets = [...tickets];
         currentPage = 1;
         renderTickets();
+
         modal.style.display = "none";
         modal.setAttribute("aria-hidden", "true");
+        if (ticketImagesInput) ticketImagesInput.value = "";
       } catch (err) {
         console.error("Ticket save failed:", err);
         alert("Failed to save ticket. Please try again.");
       }
     });
+    // ===============================================================
 
+    // Close feedback & description modals
     closeViewFeedback.addEventListener("click", () => {
       viewFeedbackModal.style.display = "none";
       viewFeedbackModal.setAttribute("aria-hidden", "true");
@@ -552,6 +691,71 @@ function waitForElement(selector, timeout = 2500) {
       viewDescriptionModal.setAttribute("aria-hidden", "true");
     });
 
+    // ========== Image viewing modal & lightbox logic ==========
+    // Open the "Attached Images" modal when clicking the item name (ticket-item-link)
+    ticketsTableBody.addEventListener("click", async (e) => {
+      const el = e.target;
+      if (!el) return;
+      if (el.classList && el.classList.contains("ticket-item-link")) {
+        const ticketId = el.dataset.id;
+        if (!ticketId) return;
+        try {
+          const docSnap = await getDoc(doc(db, "tickets", ticketId));
+          const data = docSnap.exists() ? docSnap.data() : null;
+          const images = (data && data.imageUrls) ? data.imageUrls : [];
+          if (ticketImagesContainer) {
+            if (!images || images.length === 0) {
+              ticketImagesContainer.innerHTML = "<p>No images attached.</p>";
+            } else {
+              ticketImagesContainer.innerHTML = images.map(url => {
+                // small thumbnail markup; class used for click listener
+                return `<img src="${url}" class="ticket-thumb" alt="attachment" style="width:100px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;margin:6px;" />`;
+              }).join("");
+            }
+          }
+          if (viewImagesModal) {
+            viewImagesModal.style.display = "flex";
+            viewImagesModal.setAttribute("aria-hidden", "false");
+          }
+        } catch (err) {
+          console.error("Failed to load ticket images:", err);
+          alert("Failed to load images for this ticket.");
+        }
+      }
+    });
+
+    // click thumbnail -> open lightbox
+    if (ticketImagesContainer && imageLightbox && lightboxImage) {
+      ticketImagesContainer.addEventListener("click", (e) => {
+        const target = e.target;
+        if (!target) return;
+        if (target.tagName === "IMG" && target.classList.contains("ticket-thumb")) {
+          const src = target.src;
+          if (!src) return;
+          lightboxImage.src = src;
+          imageLightbox.style.display = "flex";
+          imageLightbox.setAttribute("aria-hidden", "false");
+        }
+      });
+
+      // close lightbox when clicked anywhere
+      imageLightbox.addEventListener("click", () => {
+        imageLightbox.style.display = "none";
+        imageLightbox.setAttribute("aria-hidden", "true");
+        lightboxImage.src = "";
+      });
+    }
+
+    // close images modal
+    if (closeViewImagesModal && viewImagesModal) {
+      closeViewImagesModal.addEventListener("click", () => {
+        viewImagesModal.style.display = "none";
+        viewImagesModal.setAttribute("aria-hidden", "true");
+      });
+    }
+    // ===============================================================
+
+    // INITIAL render
     renderTickets();
   } catch (err) {
     console.error("tickets-content init error:", err);
@@ -560,7 +764,7 @@ function waitForElement(selector, timeout = 2500) {
 
 // ==================================================
 // =                    AUTOMATE                    =
-// ============================= ====================
+// ==================================================
 window.showTicketsAutomateModal = function () {
   const existing = document.getElementById('tickets-automate-overlay');
   if (existing) existing.remove();

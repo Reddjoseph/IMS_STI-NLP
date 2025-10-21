@@ -656,3 +656,78 @@ body {
 .status-urgent {
   background-color: #e11d48; /* strong red/pink */
 }
+
+/* =============================== */
+/* 📎 Ticket Image Attachments CSS */
+/* =============================== */
+
+/* Thumbnails */
+.ticket-images-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.ticket-images-container img.ticket-thumb {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ticket-images-container img.ticket-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* "No images attached" message */
+.ticket-images-container p {
+  text-align: center;
+  width: 100%;
+  color: #666;
+  font-style: italic;
+}
+
+/* =============================== */
+/* Fullscreen Lightbox Preview  */
+/* =============================== */
+.image-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.image-lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+  cursor: zoom-out;
+  transition: transform 0.2s ease-in-out;
+}
+
+.image-lightbox img:hover {
+  transform: scale(1.02);
+}
+
+.handler-clickable {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+}
+.handler-clickable:hover {
+  color: #1d4ed8; /* Slightly darker blue on hover */
+}

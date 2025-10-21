@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -17,37 +16,32 @@
       </div>
     </div>
 
-```
-<!-- Tickets Table -->
-<table class="tickets-table">
-  <thead>
-    <tr id="tc-headerRow">
-      <th>ID</th>
-      <th>Item</th>
-      <th>Concern</th>
-      <th>Description</th>
-      <th>Status</th>
-      <th>Actions</th>
-      <!-- Handler column will be dynamically added for Admins -->
-      <th>Feedback</th>
-    </tr>
-  </thead>
-  <tbody id="tc-ticketsTableBody">
-    <!-- Rows injected by tickets-content.js -->
-  </tbody>
-</table>
+    <!-- Tickets Table -->
+    <table class="tickets-table">
+      <thead>
+        <tr id="tc-headerRow">
+          <th>ID</th>
+          <th>Item</th>
+          <th>Concern</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Actions</th>
+          <th>Feedback</th>
+        </tr>
+      </thead>
+      <tbody id="tc-ticketsTableBody">
+        <tr><td colspan="7">Loading tickets...</td></tr>
+      </tbody>
+    </table>
 
-<!-- Pagination -->
-<div class="tickets-pagination" id="tc-pagination">
-  <button id="tc-prevPage">Prev</button>
-  <button id="tc-nextPage">Next</button>
-</div>
-```
-
+    <!-- Pagination -->
+    <div class="tickets-pagination" id="tc-pagination">
+      <button id="tc-prevPage">Prev</button>
+      <button id="tc-nextPage">Next</button>
+    </div>
   </div>
 
   <!-- FAQ Section -->
-
   <div class="tickets-faq">
     <h3>Frequently Asked Questions</h3>
     <div class="faq-item">
@@ -58,8 +52,7 @@
       <div class="faq-answer">
         <p>
           Administrators are working hard to resolve your submitted tickets.
-          Most concerns are addressed within <strong>3–5 working days</strong>,
-          depending on the complexity of the issue.
+          Most concerns are addressed within <strong>3–5 working days</strong>.
         </p>
       </div>
     </div>
@@ -77,30 +70,43 @@
     </div>
   </div>
 
-  <!-- Ticket Modal -->
-
+  <!-- Create Ticket Modal -->
   <div id="tc-ticketModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="tc-closeModal" class="tc-modal__close">&times;</button>
       <h3>Create Ticket</h3>
+
       <label for="tc-ticketConcern">Concern</label>
       <input type="text" id="tc-ticketConcern" placeholder="Enter concern" />
 
-```
-  <label for="tc-ticketDescription">Description</label>
-  <textarea id="tc-ticketDescription" rows="3" placeholder="Enter description"></textarea>
+      <label for="tc-ticketDescription">Description</label>
+      <textarea id="tc-ticketDescription" rows="3" placeholder="Enter description"></textarea>
 
-  <label for="tc-ticketItem">Item</label>
-  <select id="tc-ticketItem"></select>
+      <label for="tc-ticketItem">Item</label>
+      <select id="tc-ticketItem"></select>
 
-  <button id="tc-submitTicketBtn" class="btn-primary">Submit</button>
-</div>
-```
+      <label for="tc-ticketImages">Attach Images</label>
+      <input type="file" id="tc-ticketImages" multiple accept="image/*" />
 
+      <button id="tc-submitTicketBtn" class="btn-primary">Submit</button>
+    </div>
+  </div>
+
+  <!-- View Images Modal -->
+  <div id="viewTicketImagesModal" class="tc-modal" aria-hidden="true">
+    <div class="tc-modal__content">
+      <button id="closeViewImagesModal" class="tc-modal__close">&times;</button>
+      <h3>Attached Images</h3>
+      <div id="ticketImagesContainer" class="ticket-images-container"></div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Lightbox -->
+  <div id="imageLightbox" class="image-lightbox" aria-hidden="true">
+    <img id="lightboxImage" src="" alt="Preview" />
   </div>
 
   <!-- Feedback Modal -->
-
   <div id="viewFeedbackModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="closeViewFeedback" class="tc-modal__close">&times;</button>
@@ -109,8 +115,7 @@
     </div>
   </div>
 
-  <!-- Ticket Description Modal -->
-
+  <!-- Description Modal -->
   <div id="viewDescriptionModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="closeViewDescription" class="tc-modal__close">&times;</button>
@@ -120,27 +125,19 @@
   </div>
 
   <!-- Set Deadline Modal -->
-
   <div id="setDeadlineModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="closeDeadlineModal" class="tc-modal__close">&times;</button>
       <h3>Set Task Deadline</h3>
-
-```
-  <label for="deadlineDate">Deadline Date</label>
-  <input type="date" id="deadlineDate" />
-
-  <label for="deadlineNote">Additional Note (optional)</label>
-  <textarea id="deadlineNote" rows="3" placeholder="Add a short note for the maintenance staff..."></textarea>
-
-  <button id="saveDeadlineBtn" class="btn-primary">Save</button>
-</div>
-```
-
+      <label for="deadlineDate">Deadline Date</label>
+      <input type="date" id="deadlineDate" />
+      <label for="deadlineNote">Additional Note (optional)</label>
+      <textarea id="deadlineNote" rows="3"></textarea>
+      <button id="saveDeadlineBtn" class="btn-primary">Save</button>
+    </div>
   </div>
 
   <!-- Review Submission Modal -->
-
   <div id="reviewSubmissionModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="closeReviewModal" class="tc-modal__close">&times;</button>
@@ -153,8 +150,7 @@
     </div>
   </div>
 
-  <!-- Status Modal (for Assigned Tickets) -->
-
+  <!-- Status Modal -->
   <div id="statusModal" class="tc-modal" aria-hidden="true">
     <div class="tc-modal__content">
       <button id="closeStatusModal" class="tc-modal__close">&times;</button>
@@ -164,7 +160,10 @@
     </div>
   </div>
 
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js"></script>
   <script type="module" src="tickets-content.js"></script>
-
 </body>
 </html>

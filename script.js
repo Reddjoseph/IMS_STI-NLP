@@ -22,7 +22,10 @@ window.onload = function () {
   // ==================== DOM ELEMENTS ====================
   const loginModal = document.getElementById('login-modal');
   const sideNav = document.querySelector('.side-nav');
+  // LOGIN BUTTON
   const loginBtn = document.querySelector('.login-btn');
+  if (loginBtn) loginBtn.style.display = 'none'; // REMOVE THIS LINE IF GAGAMITIN YUNG LOGIN BUTTON (DO THIS IN HTML TOO)
+
   const closeLogin = document.getElementById('close-login');
   const toggleRegister = document.getElementById('toggle-register');
   const toggleLogin = document.getElementById('toggle-login');
@@ -204,6 +207,8 @@ window.onload = function () {
   function animateTransition(showRegister) {
     clearLoginFields();
     loginModal.classList.add('fade-transition');
+    const loginOptions = document.getElementById('login-options');
+    
     setTimeout(() => {
       if (showRegister) {
         modalTitle.textContent = 'Create Account';
@@ -214,6 +219,7 @@ window.onload = function () {
         // No roleSelect anymore
         document.getElementById('first-name').style.display = 'block';
         document.getElementById('last-name').style.display = 'block';
+        if (loginOptions) loginOptions.style.display = 'none';
       } else {
         modalTitle.textContent = 'Login';
         registerBtn.style.display = 'none';
@@ -222,6 +228,7 @@ window.onload = function () {
         toggleLogin.style.display = 'none';
         document.getElementById('first-name').style.display = 'none';
         document.getElementById('last-name').style.display = 'none';
+        if (loginOptions) loginOptions.style.display = 'flex';
       }
       loginModal.classList.remove('fade-transition');
     }, 200);
@@ -281,6 +288,77 @@ window.onload = function () {
       })
       .catch(error => loginError.textContent = error.message);
   });
+  
+  // ==================== REMEMBER ME ====================
+const rememberMeCheckbox = document.getElementById("remember-me");
+//const emailInput = document.getElementById("email");
+
+if (localStorage.getItem("rememberedEmail")) {
+  emailInput.value = localStorage.getItem("rememberedEmail");
+  rememberMeCheckbox.checked = true;
+}
+
+rememberMeCheckbox.addEventListener("change", () => {
+  if (rememberMeCheckbox.checked) {
+    localStorage.setItem("rememberedEmail", emailInput.value);
+  } else {
+    localStorage.removeItem("rememberedEmail");
+  }
+});
+
+emailInput.addEventListener("input", () => {
+  if (rememberMeCheckbox.checked) {
+    localStorage.setItem("rememberedEmail", emailInput.value);
+  }
+});
+
+// ==================== FORGOT PASSWORD ====================
+const forgotPasswordLink = document.getElementById("forgot-password-link");
+const forgotPasswordModal = document.getElementById("forgot-password-modal");
+const sendResetLinkBtn = document.getElementById("send-reset-link");
+const closeResetModalBtn = document.getElementById("close-reset-modal");
+const resetEmailInput = document.getElementById("reset-email");
+const resetMessage = document.getElementById("reset-message");
+
+// Open modal
+forgotPasswordLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  forgotPasswordModal.style.display = "flex";
+  resetMessage.textContent = "";
+  resetEmailInput.value = emailInput.value || "";
+});
+
+// Close modal
+closeResetModalBtn.addEventListener("click", () => {
+  forgotPasswordModal.style.display = "none";
+});
+
+// Send password reset
+sendResetLinkBtn.addEventListener("click", async () => {
+  const email = resetEmailInput.value.trim();
+  if (!email) {
+    resetMessage.style.color = "#f87171";
+    resetMessage.textContent = "Please enter your email address.";
+    return;
+  }
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    resetMessage.style.color = "#4ade80";
+    resetMessage.textContent = "✅ Reset link sent! Check your inbox.";
+  } catch (error) {
+    resetMessage.style.color = "#f87171";
+    resetMessage.textContent = error.message;
+  }
+});
+
+// Close when clicking outside
+window.addEventListener("click", (e) => {
+  if (e.target === forgotPasswordModal) {
+    forgotPasswordModal.style.display = "none";
+  }
+});
+
 
   // ==================== LOGOUT LOGIC ====================
   logoutBtn.addEventListener('click', async (e) => {
@@ -693,4 +771,14 @@ automateBtn.addEventListener('click', () => {
         console.error(err);
       });
   }
+  // ==================== REMOVE THIS SEGMENT IF KAILANGAN NG LOGIN BUTTON ====================
+const loginBtnForce = document.querySelector('.login-btn');
+if (loginBtnForce) {
+  loginBtnForce.style.display = 'none';
+  const observer = new MutationObserver(() => {
+    loginBtnForce.style.display = 'none';
+  });
+  observer.observe(loginBtnForce, { attributes: true, attributeFilter: ['style'] });
+}
+
 };

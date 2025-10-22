@@ -106,7 +106,7 @@
       </div>
 
       <!-- Login Button -->
-      <a href="#" class="login-btn">Login</a>
+      <a href="#" class="login-btn" style="display: none;">Login</a> <!-- Remove lang yung 'style' if gagamitin-->
 
       <!-- Avatar Dropdown -->
       <div id="avatar-dropdown">
@@ -133,6 +133,14 @@
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
 
+      <div class="login-options" id="login-options">
+        <label class="remember-me">
+          <input type="checkbox" id="remember-me" />
+          <span>Remember me</span>
+        </label>
+        <a href="#" id="forgot-password-link">Forgot password?</a>
+      </div>
+
       <button id="login-btn">Login</button>
       <button id="register-btn" style="display:none;">Register</button>
 
@@ -144,6 +152,23 @@
 
       <p id="login-error"></p>
     </div>
+
+    <!-- ============================= -->
+    <!-- Forgot Password Modal -->
+    <!-- ============================= -->
+    <div id="forgot-password-modal" class="modal">
+      <div class="modal-content">
+        <h2>Reset Password</h2>
+        <p>Please enter your registered email. A password reset link will be sent to you.</p>
+        <input type="email" id="reset-email" placeholder="Enter your email" />
+        <p id="reset-message" class="reset-message"></p>
+        <div class="modal-actions">
+          <button id="send-reset-link" class="btn-primary">Send Reset Link</button>
+          <button id="close-reset-modal" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
 
   </div>
 

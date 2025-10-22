@@ -76,14 +76,32 @@
       <button id="tc-closeModal" class="tc-modal__close">&times;</button>
       <h3>Create Ticket</h3>
 
-      <label for="tc-ticketConcern">Concern</label>
-      <input type="text" id="tc-ticketConcern" placeholder="Enter concern" />
+      <label for="tc-ticketConcern">Problem</label>
+      <select id="tc-ticketConcern" required>
+        <option value="">-- Select a problem --</option>
+        <option value="Hardware Issue">Hardware Issue</option>
+        <option value="Software Malfunction">Software Malfunction</option>
+        <option value="Network Connectivity">Network Connectivity</option>
+        <option value="Peripheral Not Working">Peripheral Not Working</option>
+        <option value="Printer/Scanner Issue">Printer/Scanner Issue</option>
+        <option value="System Crash or Freeze">System Crash or Freeze</option>
+        <option value="Performance Problem">Performance Problem</option>
+        <option value="Login/Account Issue">Login/Account Issue</option>
+        <option value="Display/Monitor Problem">Display/Monitor Problem</option>
+        <option value="Others - Please explain the issue in the description">Others - Explain the issue in the description</option>
+      </select>
+
 
       <label for="tc-ticketDescription">Description</label>
       <textarea id="tc-ticketDescription" rows="3" placeholder="Enter description"></textarea>
 
       <label for="tc-ticketItem">Item</label>
-      <select id="tc-ticketItem"></select>
+
+      <div class="item-select-wrapper">
+        <button id="tc-selectItemBtn" type="button" class="btn-primary">Select Item</button>
+        <span id="tc-selectedItemLabel" style="margin-left:10px; font-weight:500; color:#2563eb;">No item selected</span>
+      </div>
+
 
       <label for="tc-ticketImages">Attach Images</label>
       <input type="file" id="tc-ticketImages" multiple accept="image/*" />

@@ -264,6 +264,13 @@ body {
   font-size: 0.95rem;
   color: #000;
 }
+#tc-ticketDescription {
+  resize: none;        
+  height: 120px;     
+  line-height: 1.4;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .tc-modal button {
   margin-top: 15px;
 }
@@ -722,6 +729,9 @@ body {
   transform: scale(1.02);
 }
 
+/* =============================== */
+/* Ticket creation handler         */
+/* =============================== */
 .handler-clickable {
   color: #2563eb;
   text-decoration: underline;
@@ -729,5 +739,175 @@ body {
   font-weight: 500;
 }
 .handler-clickable:hover {
-  color: #1d4ed8; /* Slightly darker blue on hover */
+  color: #1d4ed8; 
+}
+
+.item-choice-btn {
+  background-color: #2D3E50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.item-choice-btn:hover {
+  transform: scale(1.05);
+  background-color: #3a506b;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal {
+  position: relative;
+  z-index: 10000;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* =============================== */
+/* Create Ticket: Item Selector    */
+/* =============================== */
+.item-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+#tc-selectItemBtn {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+#tc-selectItemBtn:hover {
+  background-color: #1e4fc4;
+  transform: translateY(-1px);
+}
+
+#tc-selectedItemLabel {
+  font-size: 0.9rem;
+  color: #2563eb;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+/* ================================= */
+/* Select Item Modal UI Enhancements */
+/* ================================= */
+.item-select-container {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: 10px 5px;
+}
+
+.item-group {
+  margin-bottom: 20px;
+}
+
+.item-group-title {
+  color: #2563eb;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #dbeafe;
+  padding-bottom: 4px;
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.item-card {
+  background-color: #f3f4f6;
+  color: #111;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.item-card:hover {
+  background-color: #2563eb;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.cancel-btn {
+  background-color: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.modal--medium {
+  max-width: 900px;   
+  width: 90%;     
+}
+
+/* ============================== */
+/* NOTE BUTTON (View Description) */
+/* ============================== */
+.note-btn {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.note-btn:hover {
+  background-color: #1e4fc4;
+  transform: translateY(-1px);
+}
+
+#fullDescriptionText {
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+#fullDescriptionText strong {
+  color: #2563eb;
+  font-weight: 600;
 }

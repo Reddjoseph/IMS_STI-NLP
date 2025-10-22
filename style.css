@@ -220,7 +220,7 @@ nav.navbar ul li.login-avatar-group {
   padding: 25px;
   border-radius: 12px;
   color: #000;
-  width: 320px;
+  width: 330px;
   max-width: 90vw;
   z-index: 1000;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
@@ -549,4 +549,110 @@ body:not(.firebase-initialized) .side-nav {
   transform: scale(1.3);      
 }
 
+/* ============================ */
+/* LOGIN MODAL OPTIONS          */
+/* ============================ */
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
 
+.login-options a {
+  color: #93c5fd;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-options a:hover {
+  color: #2563eb;
+}
+
+/* ============================ */
+/* FORGOT PASSWORD MODAL STYLES */
+/* ============================ */
+#forgot-password-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+#forgot-password-modal .modal-content {
+  background: #1e293b;
+  color: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+
+#forgot-password-modal input[type="email"] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+  background: #0f172a;
+  color: white;
+  margin-top: 10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.reset-message {
+  font-size: 0.9rem;
+  color: #93c5fd;
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.login-options .remember-me {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.login-options .remember-me input {
+  margin: 0;
+  position: relative;
+  top: 5px;
+  transform: translateY(1px);
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+
+.login-options a {
+  color: #93c5fd;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-options a:hover {
+  color: #2563eb;
+}

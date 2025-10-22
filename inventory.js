@@ -130,7 +130,7 @@ async function fetchInventory() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${item.id.slice(-6)}</td>
-        <td><a href="https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${item.id}" 
+        <td><a href="https://reddjoseph.github.io/IMS_STI-NLP/item.html?id=${item.id}"
                target="_blank" style="color:#000;text-decoration:none;">
               ${item.Name || "Unnamed"}</a></td>
         <td>${item.Laboratory || "Unknown"}</td>
@@ -587,7 +587,7 @@ function showAddItemForm() {
       options = [
         "Laboratory 1", "Laboratory 2", "Laboratory 3", "Laboratory 4",
         "Room 201", "Room 202", "Room 203", "Room 204",
-        "Room 401", "Room 402", "Room 403"
+        "Room 401", "Room 402", "Room 403", "Library", "Faculty"
       ];
     } else if (building === "Annex") {
       options = ["Room 201", "Room 202", "Room 203", "Room 204", "Auditorium"];

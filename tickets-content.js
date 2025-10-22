@@ -72,6 +72,14 @@ function waitForElement(selector, timeout = 2500) {
     const closeModal = document.getElementById("tc-closeModal");
     const submitTicketBtn = document.getElementById("tc-submitTicketBtn");
     const ticketConcern = document.getElementById("tc-ticketConcern");
+
+    ticketConcern.addEventListener("change", () => {
+    if (ticketConcern.value.startsWith("Others")) {
+      ticketDescription.focus();
+      }
+    });
+
+
     const ticketDescription = document.getElementById("tc-ticketDescription");
     const ticketItem = document.getElementById("tc-ticketItem");
     const ticketImagesInput = document.getElementById("tc-ticketImages"); // NEW file input
@@ -94,8 +102,44 @@ function waitForElement(selector, timeout = 2500) {
     const markSolvedBtn = document.getElementById("markSolvedBtn");
     const markUnsolvedBtn = document.getElementById("markUnsolvedBtn");
 
+    // Notifications
+    function showToast(message) {
+      let toastContainer = document.getElementById("toastContainer");
+      if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toastContainer";
+        toastContainer.style.position = "fixed";
+        toastContainer.style.bottom = "20px";
+        toastContainer.style.left = "20px";
+        toastContainer.style.zIndex = "9999";
+        document.body.appendChild(toastContainer);
+      }
 
-    // image view modal & lightbox (new)
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.style.background = "#2ecc71";
+      toast.style.color = "white";
+      toast.style.padding = "10px 16px";
+      toast.style.marginTop = "10px";
+      toast.style.borderRadius = "8px";
+      toast.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+      toast.style.fontSize = "14px";
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s ease";
+
+      toastContainer.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+      });
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+
+    // image view modal & lightbox
     const viewImagesModal = document.getElementById("viewTicketImagesModal");
     const closeViewImagesModal = document.getElementById("closeViewImagesModal");
     const ticketImagesContainer = document.getElementById("ticketImagesContainer");
@@ -172,25 +216,6 @@ function waitForElement(selector, timeout = 2500) {
         console.error("Error fetching inventory items:", err);
         return [];
       }
-    }
-
-    async function loadItemsDropdown() {
-      const items = await getInventoryItems();
-      ticketItem.innerHTML = "";
-      if (items.length === 0) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "No items available";
-        ticketItem.appendChild(opt);
-        return;
-      }
-      items.forEach((it) => {
-        const opt = document.createElement("option");
-        opt.value = it.id;
-        opt.textContent = `${it.name} (${it.lab || "No Lab"})`;
-        opt.dataset.name = it.name;
-        ticketItem.appendChild(opt);
-      });
     }
 
     let tickets = await getTickets();
@@ -345,13 +370,8 @@ function waitForElement(selector, timeout = 2500) {
           <td>${shortenId(t.id)}</td>
           <td><span class="ticket-item-link" data-id="${t.id}" style="color:#2563eb;cursor:pointer;text-decoration:underline;">${escapeHtml(t.item)}</span></td>
           <td>${escapeHtml(t.concern)}</td>
-          <td class="ticket-description">
-            ${escapeHtml(desc)}
-            ${
-              showButton
-                ? `<button class="btn-view-description" data-desc="${escapeHtml(desc)}">View Details</button>`
-                : ""
-            }
+          <td class="ticket-description" style="text-align:center;">
+            <button class="note-btn" data-desc="${escapeHtml(desc)}">📝 View Note</button>
           </td>
           <td>
             <span class="status-badge ${statusClass}" 
@@ -467,14 +487,32 @@ function waitForElement(selector, timeout = 2500) {
       }
 
       // Description view buttons
-      ticketsTableBody.querySelectorAll(".btn-view-description").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const desc = btn.dataset.desc || "No description available.";
-          fullDescriptionText.textContent = desc;
-          viewDescriptionModal.style.display = "flex";
-          viewDescriptionModal.setAttribute("aria-hidden", "false");
-        });
+      ticketsTableBody.querySelectorAll(".note-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const row = btn.closest("tr");
+        if (!row) return;
+
+        const shortId = row.cells[0]?.textContent.trim();
+        const ticket = tickets.find(t => t.id.endsWith(shortId));
+        const desc = ticket?.description || "No description available.";
+        const submitter = ticket?.issuedBy || "Unknown user";
+
+        fullDescriptionText.innerHTML = `
+    Submitted by: ${submitter}
+    
+    ${desc}
+        `;
+        fullDescriptionText.style.whiteSpace = "pre-line";
+        fullDescriptionText.style.fontFamily = "inherit";
+        fullDescriptionText.style.fontSize = "0.95rem";
+        fullDescriptionText.style.color = "#222";
+
+        viewDescriptionModal.style.display = "flex";
+        viewDescriptionModal.setAttribute("aria-hidden", "false");
       });
+    });
+
+
 
       prevPageBtn.disabled = currentPage === 1;
       nextPageBtn.disabled = currentPage * pageSize >= filteredTickets.length;
@@ -563,14 +601,20 @@ function waitForElement(selector, timeout = 2500) {
 
     // create ticket modal open
     createTicketBtn.addEventListener("click", async () => {
-      await loadItemsDropdown();
       modal.style.display = "flex";
       modal.setAttribute("aria-hidden", "false");
+
       ticketConcern.value = "";
       ticketDescription.value = "";
+      selectedItemId = null;
+      selectedItemName = null;
+
+      document.getElementById("tc-selectedItemLabel").textContent = "No item selected";
+      document.getElementById("tc-selectedItemLabel").style.color = "#2563eb";
       submitTicketBtn.textContent = "Submit";
       if (ticketImagesInput) ticketImagesInput.value = "";
     });
+
 
     // close create modal
     closeModal.addEventListener("click", () => {
@@ -589,18 +633,112 @@ function waitForElement(selector, timeout = 2500) {
         viewDescriptionModal.setAttribute("aria-hidden", "true");
       }
     });
+    // =============================
+    // ITEM SELECTION MODAL
+    // =============================
+    let selectedItemId = null;
+    let selectedItemName = null;
+
+    function showItemSelectionModal(items) {
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.style.zIndex = "9999";
+
+      const modal = document.createElement("div");
+      modal.className = "modal modal--medium";
+      modal.style.zIndex = "10000";
+      //modal.style.maxWidth = "700px";
+      modal.innerHTML = `
+        <h2 style="text-align:center; color:#2D3E50; margin-bottom:5px;">Select an Inventory Item</h2>
+        <p style="text-align:center; color:#6b7280; font-size:0.9rem; margin-bottom:15px;">
+          Hover on items to see item ID
+        </p>
+        <div id="item-select-container" class="item-select-container"></div>
+        <div style="text-align:center; margin-top:20px;">
+          <button id="close-item-select" class="cancel-btn">Close</button>
+        </div>
+      `;
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      const container = modal.querySelector("#item-select-container");
+
+      const grouped = {};
+      items.forEach(item => {
+        const lab = item.lab || "Unassigned";
+        if (!grouped[lab]) grouped[lab] = [];
+        grouped[lab].push(item);
+      });
+
+      for (const [lab, groupItems] of Object.entries(grouped)) {
+        const section = document.createElement("div");
+        section.className = "item-group";
+
+        const labHeader = document.createElement("h3");
+        labHeader.textContent = lab;
+        labHeader.className = "item-group-title";
+        section.appendChild(labHeader);
+
+        const grid = document.createElement("div");
+        grid.className = "item-grid";
+
+        groupItems.forEach(it => {
+          const card = document.createElement("button");
+          card.className = "item-card";
+          card.textContent = it.name;
+          card.title = `Item ID: ${it.id}`;
+          card.addEventListener("click", () => {
+            selectedItemId = it.id;
+            selectedItemName = it.name;
+            const shortId = it.id.slice(-5);
+            const label = document.getElementById("tc-selectedItemLabel");
+            label.textContent = `${it.name} (Item ID: ${shortId})`;
+            label.style.color = "#111";
+            overlay.remove();
+          });
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+      }
+
+      modal.querySelector("#close-item-select").addEventListener("click", () => overlay.remove());
+    }
+
+
+    // Bind button to open item modal
+    const selectItemBtn = document.getElementById("tc-selectItemBtn");
+if (selectItemBtn) {
+  selectItemBtn.addEventListener("click", async () => {
+    try {
+      const items = await getInventoryItems();
+      if (!items || items.length === 0) {
+        alert("No inventory items found.");
+        return;
+      }
+      showItemSelectionModal(items);
+    } catch (err) {
+      console.error("Failed to load items:", err);
+      alert("Error loading items. See console for details.");
+    }
+  });
+} else {
+  console.warn("⚠️ Select Item button not found in DOM yet.");
+}
+
 
     // ========== Submit Ticket (with multi-image upload) ==========
     submitTicketBtn.addEventListener("click", async () => {
       const concern = ticketConcern.value.trim();
       const description = ticketDescription.value.trim();
-      const selectedOption = ticketItem.options[ticketItem.selectedIndex];
-      const itemId = selectedOption?.value;
-      const itemName = selectedOption?.dataset.name;
-      if (!concern || !description || !itemId || !itemName) {
-        alert("Please fill in all fields.");
+      if (!concern || !description || !selectedItemId || !selectedItemName) {
+        alert("Please fill in all fields, including selecting an item.");
         return;
       }
+      const itemId = selectedItemId;
+      const itemName = selectedItemName;
+
 
       const currentUser = auth.currentUser;
       let role = "User";
@@ -627,6 +765,7 @@ function waitForElement(selector, timeout = 2500) {
       };
 
       try {
+        showToast("✅ Ticket created successfully!");
         // save ticket doc
         const newId = await saveTicket(newTicket);
 
